@@ -52,7 +52,7 @@ async function handleUpload(req, res) {
 }
 
 function listImages(req, res) {
-  const files = fs.readdirSync(ORIGINALS).filter(f => !f.startsWith('.'));
+  const files = fs.readdirSync(ORIGINALS).filter(f => !f.startsWith('.')).sort((a, b) => a.localeCompare(b, 'sv'));
   res.json(
     files.map(f => ({
       id: f,
@@ -62,11 +62,21 @@ function listImages(req, res) {
   );
 }
 
-function deleteImage(req,res){
-  const f = req.params.id;
-  fs.unlinkSync(path.join(ORIGINALS,f));
-  fs.unlinkSync(path.join(THUMBS,f));
-  res.json({ok:true});
+function deleteImage(req, res) {
+  const f = path.basename(req.params.id);
+
+  const orig = path.join(ORIGINALS, f);
+  const thumb = path.join(THUMBS, f);
+
+  try {
+    if (fs.existsSync(orig)) fs.unlinkSync(orig);
+    if (fs.existsSync(thumb)) fs.unlinkSync(thumb);
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Delete failed:', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
 }
 
 module.exports = { upload, handleUpload, listImages };

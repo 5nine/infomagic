@@ -1,133 +1,266 @@
 #!/usr/bin/env bash
 set -e
 
-echo "=== InfoMagic installer ==="
+echo "====================================="
+echo "   InfoMagic installer v1.1"
+echo "====================================="
 
+# ─────────────────────────────────────
+# Kontroll: root
+# ─────────────────────────────────────
 if [[ $EUID -ne 0 ]]; then
   echo "❌ Kör detta script med sudo"
   exit 1
 fi
 
-USER_PI="pi"
+APP_USER="infomagic"
 APP_DIR="/opt/infomagic"
 
-echo "▶ Uppdaterar system..."
+# ─────────────────────────────────────
+# Skapa användare
+# ─────────────────────────────────────
+if ! id "$APP_USER" &>/dev/null; then
+  echo "▶ Skapar användare '$APP_USER'..."
+  useradd -m -s /bin/bash "$APP_USER"
+else
+  echo "▶ Användare '$APP_USER' finns redan"
+fi
+
+# ─────────────────────────────────────
+# Systemuppdatering + paket
+# ─────────────────────────────────────
+echo "▶ Uppdaterar paketlista..."
 apt update
 
 echo "▶ Installerar beroenden..."
 apt install -y \
   nodejs npm \
-  chromium-browser \
+  chromium \
   weston \
   cec-utils \
   git
 
+# ─────────────────────────────────────
+# App-katalog
+# ─────────────────────────────────────
 echo "▶ Skapar app-katalog..."
-mkdir -p $APP_DIR
-chown -R $USER_PI:$USER_PI $APP_DIR
+mkdir -p "$APP_DIR"
+chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 
+echo
+echo "⚠️ MANUELLT STEG"
+echo "▶ Klona ditt repo till:"
+echo "   $APP_DIR"
+echo "   ex:"
+echo "   git clone https://github.com/5nine/infomagic.git $APP_DIR"
+echo
+read -p "Tryck ENTER när koden finns på plats..."
+
+# ─────────────────────────────────────
+# Node dependencies
+# ─────────────────────────────────────
 echo "▶ Installerar Node-beroenden..."
-sudo -u $USER_PI bash <<EOF
-cd $APP_DIR
+sudo -u "$APP_USER" bash <<EOF
+cd "$APP_DIR"
 npm install
 EOF
 
-echo "▶ Installerar systemd-tjänster..."
+# ─────────────────────────────────────
+# Skapa lösenord
+# ─────────────────────────────────────
+echo
+echo "====================================="
+echo "🔐 Skapa inloggningar för InfoMagic"
+echo "====================================="
+
+read -s -p "Ange ADMIN-lösenord: " ADMIN_PASS
+echo
+read -s -p "Bekräfta ADMIN-lösenord: " ADMIN_PASS2
+echo
+
+if [[ "$ADMIN_PASS" != "$ADMIN_PASS2" ]]; then
+  echo "❌ ADMIN-lösenorden matchar inte"
+  exit 1
+fi
+
+read -s -p "Ange EDITOR-lösenord: " EDITOR_PASS
+echo
+read -s -p "Bekräfta EDITOR-lösenord: " EDITOR_PASS2
+echo
+
+if [[ "$EDITOR_PASS" != "$EDITOR_PASS2" ]]; then
+  echo "❌ EDITOR-lösenorden matchar inte"
+  exit 1
+fi
+
+export ADMIN_PASS
+export EDITOR_PASS
+
+echo "▶ Skapar config/users.json..."
+
+sudo -u "$APP_USER" node <<EOF
+const fs = require('fs');
+const path = require('path');
+const bcrypt = require('bcrypt');
+
+const out = {
+  users: [
+    {
+      username: 'admin',
+      role: 'admin',
+      passwordHash: bcrypt.hashSync(process.env.ADMIN_PASS, 10)
+    },
+    {
+      username: 'editor',
+      role: 'editor',
+      passwordHash: bcrypt.hashSync(process.env.EDITOR_PASS, 10)
+    }
+  ]
+};
+
+fs.mkdirSync('$APP_DIR/config', { recursive: true });
+fs.writeFileSync(
+  '$APP_DIR/config/users.json',
+  JSON.stringify(out, null, 2)
+);
+EOF
+
+unset ADMIN_PASS
+unset EDITOR_PASS
+
+# ─────────────────────────────────────
+# systemd: backend
+# ─────────────────────────────────────
+echo "▶ Installerar infomagic-backend.service..."
 
 cat >/etc/systemd/system/infomagic-backend.service <<EOF
 [Unit]
 Description=InfoMagic Backend
 After=network.target
+Wants=network.target
 
 [Service]
-ExecStart=/usr/bin/node /opt/infomagic/server/server.js
-WorkingDirectory=/opt/infomagic
+Type=simple
+User=$APP_USER
+WorkingDirectory=$APP_DIR
+ExecStart=/usr/bin/node server/server.js
 Restart=always
-User=pi
+RestartSec=3
 Environment=NODE_ENV=production
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
+# ─────────────────────────────────────
+# systemd: weston
+# ─────────────────────────────────────
+echo "▶ Installerar weston.service..."
+
 cat >/etc/systemd/system/weston.service <<EOF
 [Unit]
 Description=Weston Wayland Compositor
-After=systemd-user-sessions.service
+After=systemd-user-sessions.service systemd-logind.service
+Requires=systemd-logind.service
 
 [Service]
-ExecStart=/usr/bin/weston --tty=1 --backend=drm-backend.so
+User=$APP_USER
+Environment=XDG_RUNTIME_DIR=/run/user/%U
+ExecStart=/usr/bin/weston \\
+  --backend=drm-backend.so \\
+  --shell=kiosk-shell.so
 Restart=always
-User=pi
-Environment=XDG_RUNTIME_DIR=/run/user/1000
 
 [Install]
-WantedBy=graphical.target
+WantedBy=multi-user.target
 EOF
+
+# ─────────────────────────────────────
+# systemd: TV
+# ─────────────────────────────────────
+echo "▶ Installerar infomagic-tv.service..."
 
 cat >/etc/systemd/system/infomagic-tv.service <<EOF
 [Unit]
-Description=InfoMagic TV UI
+Description=InfoMagic TV Display
 After=weston.service infomagic-backend.service
+Requires=weston.service
 
 [Service]
-ExecStart=/usr/bin/chromium-browser \
-  --kiosk \
-  --noerrdialogs \
-  --disable-infobars \
-  --disable-session-crashed-bubble \
-  --autoplay-policy=no-user-gesture-required \
-  --ozone-platform=wayland \
+User=$APP_USER
+Environment=XDG_RUNTIME_DIR=/run/user/%U
+Environment=WAYLAND_DISPLAY=wayland-0
+ExecStart=/usr/bin/chromium \\
+  --kiosk \\
+  --noerrdialogs \\
+  --disable-infobars \\
+  --ozone-platform=wayland \\
   http://localhost:3000/ui/tv.html
 Restart=always
-User=pi
-Environment=WAYLAND_DISPLAY=wayland-0
 
 [Install]
-WantedBy=graphical.target
+WantedBy=multi-user.target
 EOF
+
+# ─────────────────────────────────────
+# systemd: Touch
+# ─────────────────────────────────────
+echo "▶ Installerar infomagic-touch.service..."
 
 cat >/etc/systemd/system/infomagic-touch.service <<EOF
 [Unit]
-Description=InfoMagic Touch UI
+Description=InfoMagic Touch Display
 After=weston.service infomagic-backend.service
+Requires=weston.service
 
 [Service]
-ExecStart=/usr/bin/chromium-browser \
-  --kiosk \
-  --noerrdialogs \
-  --disable-infobars \
-  --disable-session-crashed-bubble \
-  --autoplay-policy=no-user-gesture-required \
-  --ozone-platform=wayland \
+User=$APP_USER
+Environment=XDG_RUNTIME_DIR=/run/user/%U
+Environment=WAYLAND_DISPLAY=wayland-1
+ExecStart=/usr/bin/chromium \\
+  --kiosk \\
+  --noerrdialogs \\
+  --disable-infobars \\
+  --ozone-platform=wayland \\
   http://localhost:3000/ui/touch.html
 Restart=always
-User=pi
-Environment=WAYLAND_DISPLAY=wayland-1
 
 [Install]
-WantedBy=graphical.target
+WantedBy=multi-user.target
 EOF
 
-echo "▶ Aktiverar tjänster..."
-systemctl daemon-reexec
+# ─────────────────────────────────────
+# sudoers
+# ─────────────────────────────────────
+echo "▶ Konfigurerar sudoers..."
+
+cat >/etc/sudoers.d/infomagic <<EOF
+$APP_USER ALL=(ALL) NOPASSWD:/usr/bin/cec-client
+$APP_USER ALL=(ALL) NOPASSWD:/usr/bin/tee
+EOF
+chmod 440 /etc/sudoers.d/infomagic
+
+# ─────────────────────────────────────
+# Bildmappar
+# ─────────────────────────────────────
+echo "▶ Skapar bildmappar..."
+mkdir -p "$APP_DIR/public/images/originals"
+mkdir -p "$APP_DIR/public/images/thumbs"
+chown -R "$APP_USER:$APP_USER" "$APP_DIR/public/images"
+
+# ─────────────────────────────────────
+# Aktivera tjänster
+# ─────────────────────────────────────
+echo "▶ Aktiverar systemd-tjänster..."
+systemctl daemon-reload
 systemctl enable infomagic-backend
 systemctl enable weston
 systemctl enable infomagic-tv
 systemctl enable infomagic-touch
 
-echo "▶ Konfigurerar sudoers (CEC + backlight)..."
-
-cat >/etc/sudoers.d/infomagic <<EOF
-pi ALL=(ALL) NOPASSWD:/usr/bin/cec-client
-pi ALL=(ALL) NOPASSWD:/usr/bin/tee
-EOF
-chmod 440 /etc/sudoers.d/infomagic
-
-echo "▶ Skapar bildmappar..."
-mkdir -p /opt/infomagic/public/images/{originals,thumbs}
-chown -R pi:pi /opt/infomagic/public/images
-
-echo "▶ Klart!"
-echo "⚠️ Läs README.md för manuella steg (CEC, cron, verifiering)"
-echo "▶ Starta om systemet: sudo reboot"
+echo
+echo "====================================="
+echo "✅ Installation klar"
+echo "▶ Starta om systemet:"
+echo "   sudo reboot"
+echo "====================================="

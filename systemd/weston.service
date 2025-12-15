@@ -1,4 +1,3 @@
-
 [Unit]
 Description=Weston Wayland Compositor
 After=systemd-user-sessions.service systemd-logind.service
@@ -6,8 +5,10 @@ Requires=systemd-logind.service
 
 [Service]
 User=infomagic
-Environment=XDG_RUNTIME_DIR=/run/user/1001
-ExecStart=/usr/bin/weston --backend=drm-backend.so --shell=kiosk-shell.so
+Environment=XDG_RUNTIME_DIR=/run/user/%U
+ExecStart=/usr/bin/weston \
+  --backend=drm-backend.so \
+  --shell=kiosk-shell.so
 Restart=always
 
 [Install]

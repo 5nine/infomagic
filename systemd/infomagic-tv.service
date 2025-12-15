@@ -1,14 +1,18 @@
-
 [Unit]
 Description=InfoMagic TV Display
-After=weston.service infomagic.service
+After=weston.service infomagic-backend.service
 Requires=weston.service
 
 [Service]
 User=infomagic
-Environment=XDG_RUNTIME_DIR=/run/user/1001
+Environment=XDG_RUNTIME_DIR=/run/user/%U
 Environment=WAYLAND_DISPLAY=wayland-0
-ExecStart=/usr/bin/chromium   --kiosk   --noerrdialogs   --disable-infobars   --ozone-platform=wayland   --window-position=0,0   http://localhost:3000/ui/tv.html
+ExecStart=/usr/bin/chromium \
+  --kiosk \
+  --noerrdialogs \
+  --disable-infobars \
+  --ozone-platform=wayland \
+  http://localhost:3000/ui/tv.html
 Restart=always
 
 [Install]

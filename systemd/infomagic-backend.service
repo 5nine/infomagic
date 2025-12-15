@@ -1,0 +1,16 @@
+[Unit]
+Description=InfoMagic Backend
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=infomagic
+WorkingDirectory=/opt/infomagic
+ExecStart=/usr/bin/node server/server.js
+Restart=always
+RestartSec=3
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

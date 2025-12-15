@@ -41,7 +41,7 @@ Systemet är byggt för att:
 ```bash
 sudo apt update
 sudo apt install -y git
-git clone https://github.com/DITT-REPO/infomagic.git
+git clone https://github.com/5nine/infomagic.git
 cd infomagic
 sudo bash install.sh
 sudo reboot

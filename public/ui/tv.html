@@ -156,7 +156,12 @@ html,body{
 
 <script>
 let images = [];
-
+let slideshowIntervalMs = 5000; // fallback
+let lastAdvance = 0;
+async function loadConfig(){
+  const cfg = await (await fetch('/api/config')).json();
+  slideshowIntervalMs = (cfg.slideshowInterval || 5) * 1000;
+}
 /* ───── BILDER ───── */
 async function loadImages(){
   images = await (await fetch('/api/images')).json();
@@ -175,13 +180,16 @@ async function updateSlide(){
     `url(${images[idx].original})`
   );
 
-  if(state.playing){
-    await fetch('/api/slideshow',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ action:'next' })
-    });
-  }
+	const now = Date.now();
+
+	if(state.playing && now - lastAdvance >= slideshowIntervalMs){
+	  await fetch('/api/slideshow',{
+		method:'POST',
+		headers:{'Content-Type':'application/json'},
+		body:JSON.stringify({ action:'next' })
+	  });
+	  lastAdvance = now;
+	}
 }
 
 /* ───── KALENDER ───── */
@@ -226,7 +234,9 @@ async function loadWeather(){
 /* ───── INIT ───── */
 (async()=>{
   await loadImages();
+  await loadConfig();
   await updateSlide();
+  lastAdvance = Date.now();
 
   setInterval(loadImages, 5000);
   setInterval(updateSlide, 1000);

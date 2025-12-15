@@ -1,6 +1,6 @@
 {
   "minImageLongSide": 1280,
-  "slideshowInterval": 120,
+  "slideshowInterval": 5,
   "calendar": {
     "calendarId": "xxxxxxxx@group.calendar.google.com",
     "view": "WEEK",

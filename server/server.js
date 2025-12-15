@@ -4,7 +4,7 @@ const path = require('path');
 
 const { requireRole } = require('./auth');
 const { loadConfig, saveConfig } = require('./config');
-const { upload, handleUpload, listImages } = require('./images');
+const { upload, handleUpload, listImages, deleteImage } = require('./images');
 const system = require('./system');
 
 const app = express();

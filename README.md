@@ -75,6 +75,17 @@ Vissa delar kräver manuell verifiering eller bör inte automatiseras.
 
 ---
 
+## Konfiguration (config/config.json)
+
+InfoMagic använder filen `config/config.json` som central konfiguration.
+
+Filen läses av backend vid start och påverkar:
+- bilduppladdning
+- bildspel
+- kalender-visning
+
+---
+
 ### HDMI-CEC (TV på/av)
 
 CEC-beteende varierar mellan TV-modeller.

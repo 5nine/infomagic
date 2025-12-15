@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<title>InfoMagic – Touch</title>
+
+<style>
+html,body{
+  margin:0;
+  height:100%;
+  background:#0f1412;
+  color:#cfd6d3;
+  font-family:system-ui,sans-serif;
+}
+
+/* THUMB GRID */
+#thumbs{
+  height:calc(100vh - 150px);
+  overflow-y:auto;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:24px;
+  padding:24px;
+  scrollbar-width:none;
+}
+#thumbs::-webkit-scrollbar{ display:none; }
+
+.thumb{
+  height:320px;
+  border-radius:18px;
+  overflow:hidden;
+  border:2px solid #1f2623;
+  background:#111715;
+}
+.thumb img{
+  width:94%;
+  height:94%;
+  margin:3%;
+  object-fit:cover;
+  border-radius:14px;
+}
+
+/* CONTROLS */
+#controls{
+  height:150px;
+  border-top:1px solid #1f2623;
+  display:flex;
+  justify-content:space-evenly;
+  align-items:center;
+}
+.btn{
+  width:96px;
+  height:96px;
+  border-radius:50%;
+  background:#355f55;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:32px;
+  user-select:none;
+}
+</style>
+</head>
+
+<body>
+
+<div id="thumbs"></div>
+
+<div id="controls">
+  <div class="btn" onclick="send('prev')">⏮</div>
+  <div class="btn" onclick="send('toggle')">⏯</div>
+  <div class="btn" onclick="send('next')">⏭</div>
+</div>
+
+<script>
+/* ───── THUMBNAILS ───── */
+async function loadThumbs(){
+  const imgs = await (await fetch('/api/images')).json();
+  thumbs.innerHTML='';
+  imgs.forEach(img=>{
+    const d=document.createElement('div');
+    d.className='thumb';
+    d.innerHTML=`<img src="${img.thumb}">`;
+    thumbs.appendChild(d);
+  });
+}
+
+/* ───── SLIDESHOW CONTROL ───── */
+function send(action){
+  fetch('/api/slideshow',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ action })
+  });
+}
+
+/* ───── INIT ───── */
+loadThumbs();
+setInterval(loadThumbs, 5000);
+</script>
+
+</body>
+</html>

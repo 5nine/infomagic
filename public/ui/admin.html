@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<title>InfoMagic – Admin</title>
+<style>
+body {
+  background:#0f1412;
+  color:#cfd6d3;
+  font-family:system-ui,sans-serif;
+  padding:24px;
+}
+</style>
+</head>
+<body>
+
+<h1>Admin</h1>
+
+<h2>Bildkvalitet</h2>
+<input id="min" type="number">
+<button onclick="saveCfg()">Spara</button>
+
+<h2>System</h2>
+<button onclick="call('/api/system/reboot')">Reboot</button>
+<button onclick="call('/api/system/tv/on')">TV PÅ</button>
+<button onclick="call('/api/system/tv/off')">TV AV</button>
+
+<script>
+async function loadCfg(){
+  const c=await (await fetch('/api/config')).json();
+  document.getElementById('min').value=c.minImageLongSide;
+}
+async function saveCfg(){
+  await fetch('/api/config',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({minImageLongSide:+min.value})
+  });
+}
+function call(url){ fetch(url,{method:'POST'}); }
+loadCfg();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<title>InfoMagic – TV</title>
+
+<style>
+html,body{
+  margin:0;
+  height:100%;
+  background:#0b0f0d;
+  color:#cfd6d3;
+  font-family:system-ui,sans-serif;
+}
+
+#layout{ display:flex; height:100%; }
+
+/* ───── BILDSPEL ───── */
+#image{
+  flex:2;
+  position:relative;
+  overflow:hidden;
+}
+
+#image::before{
+  content:'';
+  position:absolute;
+  inset:-60px;
+  background:var(--blur-image) center/cover no-repeat;
+  filter:blur(40px) brightness(.6) saturate(.85);
+  transform:scale(1.15);
+}
+
+#image img{
+  position:relative;
+  z-index:1;
+  max-height:100%;
+  max-width:100%;
+  margin:auto;
+  display:block;
+}
+
+/* LOGGA */
+#logo{
+  position:absolute;
+  z-index:3;
+  top:24px;
+  left:24px;
+  background:rgba(11,15,13,.65);
+  padding:10px 14px;
+  border-radius:8px;
+}
+#logo img{ height:42px; }
+
+/* ───── SIDOKOLUMN ───── */
+#side{
+  flex:1;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+#side::before{
+  content:'';
+  position:absolute;
+  inset:-60px;
+  background:var(--blur-image) center/cover no-repeat;
+  filter:blur(50px) brightness(.45) saturate(.8);
+  transform:scale(1.2);
+  z-index:0;
+}
+#side::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:rgba(10,14,12,.25);
+  z-index:1;
+}
+#side > *{ position:relative; z-index:2; }
+
+/* KALENDER */
+#calendar-wrap{ flex:0 0 65%; }
+#calendar-wrap iframe{
+  width:100%;
+  height:100%;
+  border:0;
+  filter:brightness(.9) contrast(.95) saturate(.9);
+}
+
+/* VÄDER */
+#weather{
+  flex:1;
+  padding:18px 20px;
+  border-top:1px solid rgba(255,255,255,.06);
+}
+#weather h3{
+  margin:0 0 12px 0;
+  font-size:15px;
+  font-weight:600;
+}
+.weather-day{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:10px;
+  font-size:14px;
+}
+.weather-left{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:120px;
+}
+.weather-icon{
+  width:28px;
+  height:28px;
+  fill:#cfd6d3;
+}
+.weather-mid{
+  flex:1;
+  font-size:12px;
+  opacity:.75;
+}
+.weather-right{
+  min-width:70px;
+  text-align:right;
+  font-weight:600;
+}
+</style>
+</head>
+
+<body>
+<div id="layout">
+
+  <div id="image">
+    <div id="logo">
+      <img src="/assets/sj_logo.png" alt="Själevadsbygg">
+    </div>
+    <img id="slide">
+  </div>
+
+  <div id="side">
+
+    <div id="calendar-wrap">
+      <iframe id="calendar"></iframe>
+    </div>
+
+    <div id="weather">
+      <h3>Örnsköldsvik – 5 dagar</h3>
+      <div id="weatherRows"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let images = [];
+
+/* ───── BILDER ───── */
+async function loadImages(){
+  images = await (await fetch('/api/images')).json();
+}
+
+/* ───── SLIDESHOW (STATE I BACKEND) ───── */
+async function updateSlide(){
+  if(!images.length) return;
+
+  const state = await (await fetch('/api/slideshow')).json();
+  const idx = ((state.index % images.length) + images.length) % images.length;
+
+  slide.src = images[idx].original;
+  document.documentElement.style.setProperty(
+    '--blur-image',
+    `url(${images[idx].original})`
+  );
+
+  if(state.playing){
+    await fetch('/api/slideshow',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ action:'next' })
+    });
+  }
+}
+
+/* ───── KALENDER ───── */
+async function loadCalendar(){
+  const cfg = await (await fetch('/api/config')).json();
+  const p = new URLSearchParams({
+    ctz:'Europe/Stockholm',
+    mode:cfg.calendar.view,
+    showTitle:0,
+    showNav:0,
+    showDate:0,
+    showTabs:0,
+    showCalendars:0,
+    showTz:0,
+    src:cfg.calendar.calendarId
+  });
+  calendar.src =
+    'https://calendar.google.com/calendar/embed?' + p;
+}
+
+/* ───── VÄDER ───── */
+async function loadWeather(){
+  const data = await (await fetch('/api/weather')).json();
+  weatherRows.innerHTML='';
+  data.forEach(d=>{
+    weatherRows.innerHTML+=`
+      <div class="weather-day">
+        <div class="weather-left">
+          <svg class="weather-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"/>
+          </svg>
+          ${d.date.slice(5)}
+        </div>
+        <div class="weather-mid">Vind ${Math.round(d.wind)} m/s</div>
+        <div class="weather-right">
+          ${Math.round(d.min)}° / ${Math.round(d.max)}°
+        </div>
+      </div>`;
+  });
+}
+
+/* ───── INIT ───── */
+(async()=>{
+  await loadImages();
+  await updateSlide();
+
+  setInterval(loadImages, 5000);
+  setInterval(updateSlide, 1000);
+
+  loadCalendar();
+  loadWeather();
+  setInterval(loadWeather, 30*60*1000);
+})();
+</script>
+</body>
+</html>

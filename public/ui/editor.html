@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<title>InfoMagic – Redaktör</title>
+<style>
+body {
+  background:#0f1412;
+  color:#cfd6d3;
+  font-family:system-ui,sans-serif;
+  padding:24px;
+}
+.grid {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:20px;
+}
+.thumb {
+  position:relative;
+}
+.thumb img {
+  width:100%;
+  border-radius:12px;
+}
+.thumb button {
+  position:absolute;
+  top:6px;
+  right:6px;
+  background:#7a2f2f;
+  color:white;
+  border:none;
+  border-radius:50%;
+  width:28px;
+  height:28px;
+}
+</style>
+</head>
+<body>
+
+<h1>Redaktör – Bilder</h1>
+
+<input type="file" id="files" multiple>
+<button onclick="upload()">Ladda upp</button>
+
+<hr>
+
+<div class="grid" id="images"></div>
+
+<script>
+async function load() {
+  const imgs = await (await fetch('/api/images')).json();
+  const g = document.getElementById('images');
+  g.innerHTML='';
+  imgs.forEach(i=>{
+    const d=document.createElement('div');
+    d.className='thumb';
+    d.innerHTML=`
+      <img src="${i.thumb}">
+      <button onclick="remove('${i.id}')">×</button>
+    `;
+    g.appendChild(d);
+  });
+}
+
+async function upload() {
+  const f=document.getElementById('files').files;
+  const fd=new FormData();
+  for(const file of f) fd.append('images',file);
+  await fetch('/api/images/upload',{method:'POST',body:fd});
+  load();
+}
+
+async function remove(id){
+  await fetch('/api/images/'+id,{method:'DELETE'});
+  load();
+}
+
+load();
+</script>
+
+</body>
+</html>

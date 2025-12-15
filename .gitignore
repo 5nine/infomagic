@@ -1,0 +1,8 @@
+node_modules/
+.env
+.DS_Store
+Thumbs.db
+public/images/originals/*
+public/images/thumbs/*
+!public/images/originals/.keep
+!public/images/thumbs/.keep

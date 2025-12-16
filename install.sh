@@ -3,7 +3,7 @@ set -e
 umask 027
 
 echo "====================================="
-echo "   InfoMagic installer v1.3"
+echo "   InfoMagic installer v1.5"
 echo "====================================="
 
 # ─────────────────────────────────────
@@ -45,7 +45,8 @@ apt install -y \
   chromium \
   weston \
   cec-utils \
-  git
+  git \
+  rsync
 
 # ─────────────────────────────────────
 # Installera app (kopiera repo till /opt)
@@ -100,7 +101,9 @@ export ADMIN_PASS
 export EDITOR_PASS
 
 echo "▶ Skapar config/users.json..."
-sudo -u "$APP_USER" node <<EOF
+sudo -u "$APP_USER" bash <<EOF
+cd "$APP_DIR/server"
+node <<'NODEEOF'
 const fs = require('fs');
 const bcrypt = require('bcrypt');
 
@@ -111,8 +114,10 @@ const out = {
   ]
 };
 
-fs.mkdirSync('$APP_DIR/config', { recursive: true });
-fs.writeFileSync('$APP_DIR/config/users.json', JSON.stringify(out, null, 2));
+fs.mkdirSync('../config', { recursive: true });
+fs.writeFileSync('../config/users.json', JSON.stringify(out, null, 2));
+console.log('✔ users.json skapad');
+NODEEOF
 EOF
 
 unset ADMIN_PASS
@@ -143,7 +148,7 @@ Environment=NODE_ENV=production
 WantedBy=multi-user.target
 EOF
 
-# Weston
+# Weston (låst enligt tidigare beslut)
 cat >/etc/systemd/system/weston.service <<EOF
 [Unit]
 Description=Weston Wayland Compositor
@@ -153,9 +158,7 @@ Requires=systemd-logind.service
 [Service]
 User=$APP_USER
 Environment=XDG_RUNTIME_DIR=/run/user/%U
-ExecStart=/usr/bin/weston \\
-  --backend=drm-backend.so \\
-  --shell=kiosk-shell.so
+ExecStart=/usr/bin/weston --backend=drm-backend.so --shell=kiosk-shell.so
 Restart=always
 
 [Install]
@@ -177,6 +180,7 @@ ExecStart=/usr/bin/chromium \\
   --kiosk \\
   --noerrdialogs \\
   --disable-infobars \\
+  --disable-session-crashed-bubble \\
   --ozone-platform=wayland \\
   http://localhost:3000/ui/tv.html
 Restart=always
@@ -200,6 +204,7 @@ ExecStart=/usr/bin/chromium \\
   --kiosk \\
   --noerrdialogs \\
   --disable-infobars \\
+  --disable-session-crashed-bubble \\
   --ozone-platform=wayland \\
   http://localhost:3000/ui/touch.html
 Restart=always

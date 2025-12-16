@@ -3,7 +3,7 @@ set -e
 umask 027
 
 echo "====================================="
-echo "   InfoMagic installer v1.5"
+echo "   InfoMagic installer v1.6"
 echo "====================================="
 
 # ─────────────────────────────────────
@@ -49,21 +49,20 @@ apt install -y \
   rsync
 
 # ─────────────────────────────────────
-# Installera app (kopiera repo till /opt)
+# Installera app
 # ─────────────────────────────────────
 echo "▶ Installerar InfoMagic till $APP_DIR..."
 mkdir -p "$APP_DIR"
 rsync -a --delete --exclude='.git' "$SCRIPT_DIR/" "$APP_DIR/"
 chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 
-# Kontroll: Node-projektet ligger i server/
 if [ ! -f "$APP_DIR/server/package.json" ]; then
   echo "❌ package.json hittades inte i $APP_DIR/server"
   exit 1
 fi
 
 # ─────────────────────────────────────
-# Node dependencies (server/)
+# Node dependencies
 # ─────────────────────────────────────
 echo "▶ Installerar Node-beroenden (server/)..."
 sudo -u "$APP_USER" bash <<EOF
@@ -79,38 +78,37 @@ echo "====================================="
 echo "🔐 Skapa inloggningar för InfoMagic"
 echo "====================================="
 
-read -s -p "Ange ADMIN-lösenord: " ADMIN_PASS
-echo
-read -s -p "Bekräfta ADMIN-lösenord: " ADMIN_PASS2
-echo
-if [[ "$ADMIN_PASS" != "$ADMIN_PASS2" ]]; then
-  echo "❌ ADMIN-lösenorden matchar inte"
-  exit 1
-fi
+read -s -p "Ange ADMIN-lösenord: " ADMIN_PASS; echo
+read -s -p "Bekräfta ADMIN-lösenord: " ADMIN_PASS2; echo
+[[ "$ADMIN_PASS" == "$ADMIN_PASS2" ]] || { echo "❌ ADMIN-lösenorden matchar inte"; exit 1; }
 
-read -s -p "Ange EDITOR-lösenord: " EDITOR_PASS
-echo
-read -s -p "Bekräfta EDITOR-lösenord: " EDITOR_PASS2
-echo
-if [[ "$EDITOR_PASS" != "$EDITOR_PASS2" ]]; then
-  echo "❌ EDITOR-lösenorden matchar inte"
-  exit 1
-fi
-
-export ADMIN_PASS
-export EDITOR_PASS
+read -s -p "Ange EDITOR-lösenord: " EDITOR_PASS; echo
+read -s -p "Bekräfta EDITOR-lösenord: " EDITOR_PASS2; echo
+[[ "$EDITOR_PASS" == "$EDITOR_PASS2" ]] || { echo "❌ EDITOR-lösenorden matchar inte"; exit 1; }
 
 echo "▶ Skapar config/users.json..."
-sudo -u "$APP_USER" bash <<EOF
+
+sudo -u "$APP_USER" \
+  ADMIN_PASS="$ADMIN_PASS" \
+  EDITOR_PASS="$EDITOR_PASS" \
+  bash <<EOF
 cd "$APP_DIR/server"
 node <<'NODEEOF'
 const fs = require('fs');
 const bcrypt = require('bcrypt');
 
+const adminPass = process.env.ADMIN_PASS;
+const editorPass = process.env.EDITOR_PASS;
+
+if (!adminPass || !editorPass) {
+  console.error('❌ Lösenord saknas i miljön');
+  process.exit(1);
+}
+
 const out = {
   users: [
-    { username: 'admin',  role: 'admin',  passwordHash: bcrypt.hashSync(process.env.ADMIN_PASS, 10) },
-    { username: 'editor', role: 'editor', passwordHash: bcrypt.hashSync(process.env.EDITOR_PASS, 10) }
+    { username: 'admin', role: 'admin', passwordHash: bcrypt.hashSync(adminPass, 10) },
+    { username: 'editor', role: 'editor', passwordHash: bcrypt.hashSync(editorPass, 10) }
   ]
 };
 
@@ -148,7 +146,7 @@ Environment=NODE_ENV=production
 WantedBy=multi-user.target
 EOF
 
-# Weston (låst enligt tidigare beslut)
+# Weston
 cat >/etc/systemd/system/weston.service <<EOF
 [Unit]
 Description=Weston Wayland Compositor

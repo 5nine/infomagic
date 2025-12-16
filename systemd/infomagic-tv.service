@@ -1,19 +1,23 @@
 [Unit]
 Description=InfoMagic TV Display
-After=weston.service infomagic-backend.service
-Requires=weston.service
+After=network-online.target infomagic-backend.service
+Wants=network-online.target
 
 [Service]
 User=infomagic
+Environment=DISPLAY=:0
 Environment=XDG_RUNTIME_DIR=/run/user/1001
-Environment=WAYLAND_DISPLAY=wayland-0
 ExecStart=/usr/bin/chromium \
   --kiosk \
   --noerrdialogs \
   --disable-infobars \
+  --disable-session-crashed-bubble \
+  --autoplay-policy=no-user-gesture-required \
+  --enable-features=UseOzonePlatform \
   --ozone-platform=wayland \
   http://localhost:3000/ui/tv.html
 Restart=always
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target

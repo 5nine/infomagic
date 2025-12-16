@@ -146,45 +146,28 @@ Environment=NODE_ENV=production
 WantedBy=multi-user.target
 EOF
 
-# Weston
-cat >/etc/systemd/system/weston.service <<EOF
-[Unit]
-Description=Weston Wayland Compositor
-After=systemd-user-sessions.service systemd-logind.service
-Requires=systemd-logind.service
-
-[Service]
-Type=simple
-ExecStart=/usr/bin/weston-launch \
-  --user infomagic \
-  -- \
-  /usr/bin/weston \
-  --backend=drm-backend.so \
-  --shell=kiosk-shell.so
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
 # TV
 cat >/etc/systemd/system/infomagic-tv.service <<EOF
 [Unit]
-Description=Weston Wayland Compositor (Kiosk)
-After=systemd-logind.service
-Requires=systemd-logind.service
+Description=InfoMagic TV Display
+After=network-online.target infomagic-backend.service
+Wants=network-online.target
 
 [Service]
-Type=simple
-User=root
-Environment=XDG_RUNTIME_DIR=/run/weston
-ExecStartPre=/bin/mkdir -p /run/weston
-ExecStartPre=/bin/chmod 0700 /run/weston
-ExecStart=/usr/bin/weston \
-  --backend=drm-backend.so \
-  --shell=kiosk-shell.so
+User=infomagic
+Environment=DISPLAY=:0
+Environment=XDG_RUNTIME_DIR=/run/user/1001
+ExecStart=/usr/bin/chromium \
+  --kiosk \
+  --noerrdialogs \
+  --disable-infobars \
+  --disable-session-crashed-bubble \
+  --autoplay-policy=no-user-gesture-required \
+  --enable-features=UseOzonePlatform \
+  --ozone-platform=wayland \
+  http://localhost:3000/ui/tv.html
 Restart=always
-RestartSec=2
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
@@ -194,21 +177,23 @@ EOF
 cat >/etc/systemd/system/infomagic-touch.service <<EOF
 [Unit]
 Description=InfoMagic Touch Display
-After=weston.service infomagic-backend.service
-Requires=weston.service
+After=network-online.target infomagic-backend.service
+Wants=network-online.target
 
 [Service]
-User=$APP_USER
+User=infomagic
+Environment=DISPLAY=:0
 Environment=XDG_RUNTIME_DIR=/run/user/1001
-Environment=WAYLAND_DISPLAY=wayland-1
-ExecStart=/usr/bin/chromium \\
-  --kiosk \\
-  --noerrdialogs \\
-  --disable-infobars \\
-  --disable-session-crashed-bubble \\
-  --ozone-platform=wayland \\
+ExecStart=/usr/bin/chromium \
+  --kiosk \
+  --noerrdialogs \
+  --disable-infobars \
+  --disable-session-crashed-bubble \
+  --enable-features=UseOzonePlatform \
+  --ozone-platform=wayland \
   http://localhost:3000/ui/touch.html
 Restart=always
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target

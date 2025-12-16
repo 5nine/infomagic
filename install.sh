@@ -150,8 +150,8 @@ EOF
 cat >/etc/systemd/system/infomagic-tv.service <<EOF
 [Unit]
 Description=InfoMagic TV Display
-After=network-online.target infomagic-backend.service
-Wants=network-online.target
+After=network-online.target infomagic-backend.service infomagic-x.service
+Requires=infomagic-x.servic
 
 [Service]
 User=infomagic
@@ -177,8 +177,8 @@ EOF
 cat >/etc/systemd/system/infomagic-touch.service <<EOF
 [Unit]
 Description=InfoMagic Touch Display
-After=network-online.target infomagic-backend.service
-Wants=network-online.target
+After=network-online.target infomagic-backend.service infomagic-x.service
+Requires=infomagic-x.service
 
 [Service]
 User=infomagic
@@ -223,8 +223,8 @@ chown -R "$APP_USER:$APP_USER" "$APP_DIR/public/images"
 # ─────────────────────────────────────
 echo "▶ Aktiverar systemd-tjänster..."
 systemctl daemon-reload
+systemctl enable infomagic-x
 systemctl enable infomagic-backend
-systemctl enable weston
 systemctl enable infomagic-tv
 systemctl enable infomagic-touch
 

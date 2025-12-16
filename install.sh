@@ -201,6 +201,23 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
 
+# X
+cat >/etc/systemd/system/infomagic-x.service <<EOF
+[Unit]
+Description=InfoMagic Xorg Server
+After=systemd-user-sessions.service
+Before=infomagic-tv.service infomagic-touch.service
+
+[Service]
+User=infomagic
+TTYPath=/dev/tty1
+ExecStart=/usr/bin/Xorg :0 vt1 -nolisten tcp
+Restart=always
+
+[Install]
+WantedBy=graphical.target
+EOF
+
 # ─────────────────────────────────────
 # sudoers
 # ─────────────────────────────────────

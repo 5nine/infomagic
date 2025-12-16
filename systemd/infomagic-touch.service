@@ -9,7 +9,7 @@ Environment=DISPLAY=:1
 ExecStart=/usr/bin/chromium \
   --kiosk \
   --window-position=1920,0 \
-  --window-size=720,1280 \
+  --window-size=1280,720 \
   --noerrdialogs \
   --disable-infobars \
   --disable-session-crashed-bubble \

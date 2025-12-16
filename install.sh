@@ -154,9 +154,13 @@ After=systemd-user-sessions.service systemd-logind.service
 Requires=systemd-logind.service
 
 [Service]
-User=$APP_USER
-Environment=XDG_RUNTIME_DIR=/run/user/1001
-ExecStart=/usr/bin/weston --backend=drm-backend.so --shell=kiosk-shell.so
+Type=simple
+ExecStart=/usr/bin/weston-launch \
+  --user infomagic \
+  -- \
+  /usr/bin/weston \
+  --backend=drm-backend.so \
+  --shell=kiosk-shell.so
 Restart=always
 
 [Install]

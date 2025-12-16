@@ -156,15 +156,15 @@ Wants=network-online.target
 [Service]
 User=infomagic
 Environment=DISPLAY=:0
-Environment=XDG_RUNTIME_DIR=/run/user/1001
 ExecStart=/usr/bin/chromium \
   --kiosk \
+  --window-position=0,0 \
+  --window-size=1920,1080 \
   --noerrdialogs \
   --disable-infobars \
   --disable-session-crashed-bubble \
-  --autoplay-policy=no-user-gesture-required \
-  --enable-features=UseOzonePlatform \
-  --ozone-platform=wayland \
+  --disable-translate \
+  --disable-features=TranslateUI \
   http://localhost:3000/ui/tv.html
 Restart=always
 RestartSec=5
@@ -182,18 +182,20 @@ Wants=network-online.target
 
 [Service]
 User=infomagic
-Environment=DISPLAY=:0
-Environment=XDG_RUNTIME_DIR=/run/user/1001
+Environment=DISPLAY=:1
 ExecStart=/usr/bin/chromium \
   --kiosk \
+  --window-position=1920,0 \
+  --window-size=720,1280 \
   --noerrdialogs \
   --disable-infobars \
   --disable-session-crashed-bubble \
-  --enable-features=UseOzonePlatform \
-  --ozone-platform=wayland \
+  --disable-translate \
+  --disable-features=TranslateUI \
   http://localhost:3000/ui/touch.html
 Restart=always
 RestartSec=5
+
 
 [Install]
 WantedBy=multi-user.target

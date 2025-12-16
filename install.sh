@@ -155,7 +155,7 @@ Requires=systemd-logind.service
 
 [Service]
 User=$APP_USER
-Environment=XDG_RUNTIME_DIR=/run/user/%U
+Environment=XDG_RUNTIME_DIR=/run/user/1001
 ExecStart=/usr/bin/weston --backend=drm-backend.so --shell=kiosk-shell.so
 Restart=always
 
@@ -172,7 +172,7 @@ Requires=weston.service
 
 [Service]
 User=$APP_USER
-Environment=XDG_RUNTIME_DIR=/run/user/%U
+Environment=XDG_RUNTIME_DIR=/run/user/1001
 Environment=WAYLAND_DISPLAY=wayland-0
 ExecStart=/usr/bin/chromium \\
   --kiosk \\
@@ -196,7 +196,7 @@ Requires=weston.service
 
 [Service]
 User=$APP_USER
-Environment=XDG_RUNTIME_DIR=/run/user/%U
+Environment=XDG_RUNTIME_DIR=/run/user/1001
 Environment=WAYLAND_DISPLAY=wayland-1
 ExecStart=/usr/bin/chromium \\
   --kiosk \\

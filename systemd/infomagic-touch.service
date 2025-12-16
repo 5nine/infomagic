@@ -5,7 +5,7 @@ Requires=weston.service
 
 [Service]
 User=infomagic
-Environment=XDG_RUNTIME_DIR=/run/user/%U
+Environment=XDG_RUNTIME_DIR=/run/user/1001
 Environment=WAYLAND_DISPLAY=wayland-1
 ExecStart=/usr/bin/chromium \
   --kiosk \
@@ -17,3 +17,5 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
+
+

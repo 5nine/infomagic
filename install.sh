@@ -146,76 +146,24 @@ Environment=NODE_ENV=production
 WantedBy=multi-user.target
 EOF
 
-# TV
-cat >/etc/systemd/system/infomagic-tv.service <<EOF
-[Unit]
-Description=InfoMagic TV Display
-After=network-online.target infomagic-backend.service infomagic-x.service
-Requires=infomagic-x.servic
-
-[Service]
-User=infomagic
-Environment=DISPLAY=:0
-ExecStart=/usr/bin/chromium \
-  --kiosk \
-  --window-position=0,0 \
-  --window-size=1920,1080 \
-  --noerrdialogs \
-  --disable-infobars \
-  --disable-session-crashed-bubble \
-  --disable-translate \
-  --disable-features=TranslateUI \
-  http://localhost:3000/ui/tv.html
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Touch
-cat >/etc/systemd/system/infomagic-touch.service <<EOF
-[Unit]
-Description=InfoMagic Touch Display
-After=network-online.target infomagic-backend.service infomagic-x.service
-Requires=infomagic-x.service
-
-[Service]
-User=infomagic
-Environment=DISPLAY=:1
-ExecStart=/usr/bin/chromium \
-  --kiosk \
-  --window-position=1920,0 \
-  --window-size=1280,720 \
-  --noerrdialogs \
-  --disable-infobars \
-  --disable-session-crashed-bubble \
-  --disable-translate \
-  --disable-features=TranslateUI \
-  http://localhost:3000/ui/touch.html
-Restart=always
-RestartSec=5
-
-
-[Install]
-WantedBy=multi-user.target
-EOF
 
 # X
 cat >/etc/systemd/system/infomagic-x.service <<EOF
 [Unit]
-Description=InfoMagic Xorg Server
-After=systemd-user-sessions.service
-Before=infomagic-tv.service infomagic-touch.service
+Description=InfoMagic X session
+After=network.target infomagic-backend.service
+Requires=infomagic-backend.service
 
 [Service]
 User=infomagic
 TTYPath=/dev/tty1
-ExecStart=/usr/bin/Xorg :0 vt1 -nolisten tcp
+Environment=DISPLAY=:0
+ExecStart=/usr/bin/startx
 Restart=always
+RestartSec=5
 
 [Install]
-WantedBy=graphical.target
+WantedBy=multi-user.target
 EOF
 
 # ─────────────────────────────────────

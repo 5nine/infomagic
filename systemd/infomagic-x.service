@@ -1,13 +1,15 @@
 [Unit]
-Description=InfoMagic Xorg Server
-After=systemd-user-sessions.service
-Before=infomagic-tv.service infomagic-touch.service
+Description=InfoMagic X session
+After=network.target infomagic-backend.service
+Requires=infomagic-backend.service
 
 [Service]
 User=infomagic
 TTYPath=/dev/tty1
-ExecStart=/usr/bin/Xorg :0 vt1 -nolisten tcp
+Environment=DISPLAY=:0
+ExecStart=/usr/bin/startx
 Restart=always
+RestartSec=5
 
 [Install]
-WantedBy=graphical.target
+WantedBy=multi-user.target

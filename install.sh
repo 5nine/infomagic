@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -e
+umask 027
 
 echo "====================================="
-echo "   InfoMagic installer v1.1"
+echo "   InfoMagic installer v1.3"
 echo "====================================="
 
 # ─────────────────────────────────────
@@ -14,7 +15,13 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 APP_USER="infomagic"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 APP_DIR="/opt/infomagic"
+
+echo "▶ Installerar från källa:"
+echo "   $SCRIPT_DIR"
+echo "▶ Mål:"
+echo "   $APP_DIR"
 
 # ─────────────────────────────────────
 # Skapa användare
@@ -41,27 +48,25 @@ apt install -y \
   git
 
 # ─────────────────────────────────────
-# App-katalog
+# Installera app (kopiera repo till /opt)
 # ─────────────────────────────────────
-echo "▶ Skapar app-katalog..."
+echo "▶ Installerar InfoMagic till $APP_DIR..."
 mkdir -p "$APP_DIR"
+rsync -a --delete --exclude='.git' "$SCRIPT_DIR/" "$APP_DIR/"
 chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 
-echo
-echo "⚠️ MANUELLT STEG"
-echo "▶ Klona ditt repo till:"
-echo "   $APP_DIR"
-echo "   ex:"
-echo "   git clone https://github.com/5nine/infomagic.git $APP_DIR"
-echo
-read -p "Tryck ENTER när koden finns på plats..."
+# Kontroll: Node-projektet ligger i server/
+if [ ! -f "$APP_DIR/server/package.json" ]; then
+  echo "❌ package.json hittades inte i $APP_DIR/server"
+  exit 1
+fi
 
 # ─────────────────────────────────────
-# Node dependencies
+# Node dependencies (server/)
 # ─────────────────────────────────────
-echo "▶ Installerar Node-beroenden..."
+echo "▶ Installerar Node-beroenden (server/)..."
 sudo -u "$APP_USER" bash <<EOF
-cd "$APP_DIR"
+cd "$APP_DIR/server"
 npm install
 EOF
 
@@ -77,7 +82,6 @@ read -s -p "Ange ADMIN-lösenord: " ADMIN_PASS
 echo
 read -s -p "Bekräfta ADMIN-lösenord: " ADMIN_PASS2
 echo
-
 if [[ "$ADMIN_PASS" != "$ADMIN_PASS2" ]]; then
   echo "❌ ADMIN-lösenorden matchar inte"
   exit 1
@@ -87,7 +91,6 @@ read -s -p "Ange EDITOR-lösenord: " EDITOR_PASS
 echo
 read -s -p "Bekräfta EDITOR-lösenord: " EDITOR_PASS2
 echo
-
 if [[ "$EDITOR_PASS" != "$EDITOR_PASS2" ]]; then
   echo "❌ EDITOR-lösenorden matchar inte"
   exit 1
@@ -97,42 +100,30 @@ export ADMIN_PASS
 export EDITOR_PASS
 
 echo "▶ Skapar config/users.json..."
-
 sudo -u "$APP_USER" node <<EOF
 const fs = require('fs');
-const path = require('path');
 const bcrypt = require('bcrypt');
 
 const out = {
   users: [
-    {
-      username: 'admin',
-      role: 'admin',
-      passwordHash: bcrypt.hashSync(process.env.ADMIN_PASS, 10)
-    },
-    {
-      username: 'editor',
-      role: 'editor',
-      passwordHash: bcrypt.hashSync(process.env.EDITOR_PASS, 10)
-    }
+    { username: 'admin',  role: 'admin',  passwordHash: bcrypt.hashSync(process.env.ADMIN_PASS, 10) },
+    { username: 'editor', role: 'editor', passwordHash: bcrypt.hashSync(process.env.EDITOR_PASS, 10) }
   ]
 };
 
 fs.mkdirSync('$APP_DIR/config', { recursive: true });
-fs.writeFileSync(
-  '$APP_DIR/config/users.json',
-  JSON.stringify(out, null, 2)
-);
+fs.writeFileSync('$APP_DIR/config/users.json', JSON.stringify(out, null, 2));
 EOF
 
 unset ADMIN_PASS
 unset EDITOR_PASS
 
 # ─────────────────────────────────────
-# systemd: backend
+# systemd-tjänster
 # ─────────────────────────────────────
-echo "▶ Installerar infomagic-backend.service..."
+echo "▶ Installerar systemd-tjänster..."
 
+# Backend
 cat >/etc/systemd/system/infomagic-backend.service <<EOF
 [Unit]
 Description=InfoMagic Backend
@@ -152,11 +143,7 @@ Environment=NODE_ENV=production
 WantedBy=multi-user.target
 EOF
 
-# ─────────────────────────────────────
-# systemd: weston
-# ─────────────────────────────────────
-echo "▶ Installerar weston.service..."
-
+# Weston
 cat >/etc/systemd/system/weston.service <<EOF
 [Unit]
 Description=Weston Wayland Compositor
@@ -175,11 +162,7 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 
-# ─────────────────────────────────────
-# systemd: TV
-# ─────────────────────────────────────
-echo "▶ Installerar infomagic-tv.service..."
-
+# TV
 cat >/etc/systemd/system/infomagic-tv.service <<EOF
 [Unit]
 Description=InfoMagic TV Display
@@ -202,11 +185,7 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 
-# ─────────────────────────────────────
-# systemd: Touch
-# ─────────────────────────────────────
-echo "▶ Installerar infomagic-touch.service..."
-
+# Touch
 cat >/etc/systemd/system/infomagic-touch.service <<EOF
 [Unit]
 Description=InfoMagic Touch Display
@@ -233,7 +212,6 @@ EOF
 # sudoers
 # ─────────────────────────────────────
 echo "▶ Konfigurerar sudoers..."
-
 cat >/etc/sudoers.d/infomagic <<EOF
 $APP_USER ALL=(ALL) NOPASSWD:/usr/bin/cec-client
 $APP_USER ALL=(ALL) NOPASSWD:/usr/bin/tee
@@ -244,8 +222,7 @@ chmod 440 /etc/sudoers.d/infomagic
 # Bildmappar
 # ─────────────────────────────────────
 echo "▶ Skapar bildmappar..."
-mkdir -p "$APP_DIR/public/images/originals"
-mkdir -p "$APP_DIR/public/images/thumbs"
+mkdir -p "$APP_DIR/public/images/originals" "$APP_DIR/public/images/thumbs"
 chown -R "$APP_USER:$APP_USER" "$APP_DIR/public/images"
 
 # ─────────────────────────────────────

@@ -6,3 +6,6 @@ public/images/originals/*
 public/images/thumbs/*
 !public/images/originals/.keep
 !public/images/thumbs/.keep
+config/users.json
+public/images/originals/
+public/images/thumbs/

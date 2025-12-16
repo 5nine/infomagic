@@ -79,4 +79,9 @@ function deleteImage(req, res) {
   }
 }
 
-module.exports = { upload, handleUpload, listImages };
+module.exports = {
+  upload,
+  handleUpload,
+  listImages,
+  deleteImage
+};

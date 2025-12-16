@@ -170,22 +170,21 @@ EOF
 # TV
 cat >/etc/systemd/system/infomagic-tv.service <<EOF
 [Unit]
-Description=InfoMagic TV Display
-After=weston.service infomagic-backend.service
-Requires=weston.service
+Description=Weston Wayland Compositor (Kiosk)
+After=systemd-logind.service
+Requires=systemd-logind.service
 
 [Service]
-User=$APP_USER
-Environment=XDG_RUNTIME_DIR=/run/user/1001
-Environment=WAYLAND_DISPLAY=wayland-0
-ExecStart=/usr/bin/chromium \\
-  --kiosk \\
-  --noerrdialogs \\
-  --disable-infobars \\
-  --disable-session-crashed-bubble \\
-  --ozone-platform=wayland \\
-  http://localhost:3000/ui/tv.html
+Type=simple
+User=root
+Environment=XDG_RUNTIME_DIR=/run/weston
+ExecStartPre=/bin/mkdir -p /run/weston
+ExecStartPre=/bin/chmod 0700 /run/weston
+ExecStart=/usr/bin/weston \
+  --backend=drm-backend.so \
+  --shell=kiosk-shell.so
 Restart=always
+RestartSec=2
 
 [Install]
 WantedBy=multi-user.target

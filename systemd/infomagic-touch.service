@@ -1,7 +1,7 @@
 [Unit]
 Description=InfoMagic Touch Display
-After=network-online.target infomagic-backend.service
-Wants=network-online.target
+After=network-online.target infomagic-backend.service infomagic-x.service
+Requires=infomagic-x.service
 
 [Service]
 User=infomagic

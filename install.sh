@@ -121,6 +121,32 @@ EOF
 unset ADMIN_PASS
 unset EDITOR_PASS
 
+echo "▶ Skapar config/config.json..."
+
+sudo -u "$APP_USER" bash <<EOF
+cd "$APP_DIR/server"
+node <<'NODEEOF'
+const fs = require('fs');
+
+const config = {
+  minImageLongSide: 1280,
+  slideshowInterval: 5,
+  calendar: {
+    calendarId: "xxxxxxxx@group.calendar.google.com",
+    view: "WEEK",
+    showTitle: false,
+    showNav: false,
+    showDate: false,
+    showTz: false
+  }
+};
+
+fs.mkdirSync('../config', { recursive: true });
+fs.writeFileSync('../config/config.json', JSON.stringify(config, null, 2));
+console.log('✔ config.json skapad');
+NODEEOF
+EOF
+
 # ─────────────────────────────────────
 # systemd-tjänster
 # ─────────────────────────────────────

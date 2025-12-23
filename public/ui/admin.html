@@ -15,6 +15,16 @@
 <input id="min" type="number">
 <button onclick="saveCfg()">Spara</button>
 
+<h2>Kalender</h2>
+<label>Kalender-ID:</label>
+<input id="calendarId" type="text" placeholder="example@group.calendar.google.com">
+<label>Vy:</label>
+<select id="calendarView">
+  <option value="WEEK">Vecka</option>
+  <option value="MONTH">Månad</option>
+</select>
+<button onclick="saveCalendarCfg()">Spara</button>
+
 <h2>System</h2>
 <button onclick="call('/api/system/reboot')">Reboot</button>
 <button onclick="call('/api/system/tv/on')">TV PÅ</button>
@@ -24,12 +34,28 @@
 async function loadCfg(){
   const c=await (await fetch('/api/config')).json();
   document.getElementById('min').value=c.minImageLongSide;
+  if(c.calendar){
+    document.getElementById('calendarId').value=c.calendar.calendarId||'';
+    document.getElementById('calendarView').value=c.calendar.view||'WEEK';
+  }
 }
 async function saveCfg(){
   await fetch('/api/config',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({minImageLongSide:+min.value})
+  });
+}
+async function saveCalendarCfg(){
+  await fetch('/api/config',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      calendar:{
+        calendarId:document.getElementById('calendarId').value,
+        view:document.getElementById('calendarView').value
+      }
+    })
   });
 }
 function call(url){ fetch(url,{method:'POST'}); }

@@ -89,6 +89,11 @@ app.get('/api/config', (req, res) => {
 
 app.post('/api/config', requireRole(['admin']), (req, res) => {
   const cfg = loadConfig();
+  if (req.body.calendar && cfg.calendar) {
+    // Deep merge for calendar object
+    Object.assign(cfg.calendar, req.body.calendar);
+    delete req.body.calendar;
+  }
   Object.assign(cfg, req.body);
   saveConfig(cfg);
   res.json({ ok: true });

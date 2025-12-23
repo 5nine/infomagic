@@ -22,6 +22,7 @@ app.use(
 );
 
 app.use('/images', express.static(path.join(__dirname, '../public/images')));
+app.use('/assets', express.static(path.join(__dirname, '../public/assets')));
 app.use('/ui', express.static(path.join(__dirname, '../public/ui')));
 app.use(
   '/styles.css',

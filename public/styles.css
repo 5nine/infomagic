@@ -5,7 +5,8 @@ body {
   font-family: system-ui, sans-serif;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
 }
@@ -50,9 +51,9 @@ label {
   font-size: 14px;
 }
 
-input[type="text"],
-input[type="password"],
-input[type="number"],
+input[type='text'],
+input[type='password'],
+input[type='number'],
 select {
   width: 100%;
   padding: 12px;
@@ -64,9 +65,9 @@ select {
   box-sizing: border-box;
 }
 
-input[type="text"]:focus,
-input[type="password"]:focus,
-input[type="number"]:focus,
+input[type='text']:focus,
+input[type='password']:focus,
+input[type='number']:focus,
 select:focus {
   outline: none;
   border-color: #4a6b5f;
@@ -279,7 +280,8 @@ body.tv-page {
   width: 100%;
   height: 100%;
   border: 0;
-  filter: brightness(0.9) contrast(0.95) saturate(0.9);
+  filter: invert(1);
+  opacity: 0.5;
 }
 
 /* VÄDER */
@@ -384,4 +386,3 @@ body.touch-page {
   font-size: 32px;
   user-select: none;
 }
-

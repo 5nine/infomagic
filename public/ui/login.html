@@ -38,7 +38,8 @@ label {
   font-size:14px;
 }
 input[type="text"],
-input[type="password"] {
+input[type="password"],
+select {
   width:100%;
   padding:12px;
   background:#0f1412;
@@ -49,9 +50,13 @@ input[type="password"] {
   box-sizing:border-box;
 }
 input[type="text"]:focus,
-input[type="password"]:focus {
+input[type="password"]:focus,
+select:focus {
   outline:none;
   border-color:#4a6b5f;
+}
+select {
+  cursor:pointer;
 }
 button {
   width:100%;
@@ -106,8 +111,12 @@ button:disabled {
   
   <form id="loginForm" onsubmit="handleLogin(event)">
     <div class="form-group">
-      <label for="username">Användarnamn</label>
-      <input type="text" id="username" name="username" required autofocus>
+      <label for="username">Användare</label>
+      <select id="username" name="username" required autofocus>
+        <option value="">Välj användare</option>
+        <option value="admin">Admin</option>
+        <option value="editor">Redaktör</option>
+      </select>
     </div>
     
     <div class="form-group">

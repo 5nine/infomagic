@@ -58,6 +58,16 @@ app.post('/login', async (req, res) => {
   res.json({ ok: true, role: user.role, username: user.username });
 });
 
+/* --- Logout --- */
+app.post('/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      return res.status(500).json({ error: 'Kunde inte logga ut' });
+    }
+    res.json({ ok: true });
+  });
+});
+
 /* --- Images --- */
 app.post(
   '/api/images/upload',

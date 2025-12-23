@@ -10,9 +10,26 @@ body {
   font-family:system-ui,sans-serif;
   padding:24px;
 }
+.logout-btn {
+  position:absolute;
+  top:24px;
+  right:24px;
+  background:#7a2f2f;
+  color:white;
+  border:none;
+  border-radius:6px;
+  padding:8px 16px;
+  cursor:pointer;
+  font-size:14px;
+}
+.logout-btn:hover {
+  background:#8a3f3f;
+}
 </style>
 </head>
 <body>
+
+<button class="logout-btn" onclick="logout()">Logga ut</button>
 
 <h1>Admin</h1>
 
@@ -38,6 +55,10 @@ async function saveCfg(){
   });
 }
 function call(url){ fetch(url,{method:'POST'}); }
+async function logout(){
+  await fetch('/logout',{method:'POST'});
+  window.location.href='/';
+}
 loadCfg();
 </script>
 

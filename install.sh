@@ -126,45 +126,16 @@ unset EDITOR_PASS
 # ─────────────────────────────────────
 echo "▶ Installerar systemd-tjänster..."
 
-# Backend
-cat >/etc/systemd/system/infomagic-backend.service <<EOF
-[Unit]
-Description=InfoMagic Backend
-After=network.target
-Wants=network.target
-
-[Service]
-Type=simple
-User=$APP_USER
-WorkingDirectory=$APP_DIR
-ExecStart=/usr/bin/node server/server.js
-Restart=always
-RestartSec=3
-Environment=NODE_ENV=production
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-
-# X
-cat >/etc/systemd/system/infomagic-x.service <<EOF
-[Unit]
-Description=InfoMagic X session
-After=network.target infomagic-backend.service
-Requires=infomagic-backend.service
-
-[Service]
-User=infomagic
-TTYPath=/dev/tty1
-Environment=DISPLAY=:0
-ExecStart=/usr/bin/startx
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-EOF
+# Kopiera service-filer från repo och ersätt variabler
+for service_file in "$SCRIPT_DIR/systemd"/*.service; do
+  if [ -f "$service_file" ]; then
+    service_name=$(basename "$service_file")
+    echo "  → Installerar $service_name..."
+    sed -e "s|@APP_USER@|$APP_USER|g" \
+        -e "s|@APP_DIR@|$APP_DIR|g" \
+        "$service_file" > "/etc/systemd/system/$service_name"
+  fi
+done
 
 # ─────────────────────────────────────
 # sudoers

@@ -5,8 +5,8 @@ Wants=network.target
 
 [Service]
 Type=simple
-User=infomagic
-WorkingDirectory=/opt/infomagic
+User=@APP_USER@
+WorkingDirectory=@APP_DIR@
 ExecStart=/usr/bin/node server/server.js
 Restart=always
 RestartSec=3

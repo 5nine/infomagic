@@ -4,7 +4,7 @@ After=network.target infomagic-backend.service
 Requires=infomagic-backend.service
 
 [Service]
-User=infomagic
+User=@APP_USER@
 TTYPath=/dev/tty1
 Environment=DISPLAY=:0
 ExecStart=/usr/bin/startx

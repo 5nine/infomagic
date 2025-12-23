@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<title>InfoMagic – Inloggning</title>
+<style>
+body {
+  background:#0f1412;
+  color:#cfd6d3;
+  font-family:system-ui,sans-serif;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+  margin:0;
+  padding:24px;
+}
+.login-container {
+  background:#1a2320;
+  border-radius:12px;
+  padding:40px;
+  width:100%;
+  max-width:400px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.3);
+}
+h1 {
+  margin:0 0 32px 0;
+  text-align:center;
+  color:#cfd6d3;
+}
+.form-group {
+  margin-bottom:20px;
+}
+label {
+  display:block;
+  margin-bottom:8px;
+  color:#a0a8a5;
+  font-size:14px;
+}
+input[type="text"],
+input[type="password"],
+select {
+  width:100%;
+  padding:12px;
+  background:#0f1412;
+  border:1px solid #2a3532;
+  border-radius:6px;
+  color:#cfd6d3;
+  font-size:16px;
+  box-sizing:border-box;
+}
+input[type="text"]:focus,
+input[type="password"]:focus,
+select:focus {
+  outline:none;
+  border-color:#4a6b5f;
+}
+select {
+  cursor:pointer;
+}
+button {
+  width:100%;
+  padding:12px;
+  background:#4a6b5f;
+  color:white;
+  border:none;
+  border-radius:6px;
+  font-size:16px;
+  font-weight:500;
+  cursor:pointer;
+  margin-top:8px;
+}
+button:hover {
+  background:#5a7b6f;
+}
+button:disabled {
+  background:#2a3532;
+  cursor:not-allowed;
+}
+.error {
+  background:#7a2f2f;
+  color:white;
+  padding:12px;
+  border-radius:6px;
+  margin-bottom:20px;
+  display:none;
+}
+.error.show {
+  display:block;
+}
+.success {
+  background:#2f7a4a;
+  color:white;
+  padding:12px;
+  border-radius:6px;
+  margin-bottom:20px;
+  display:none;
+}
+.success.show {
+  display:block;
+}
+</style>
+</head>
+<body>
+
+<div class="login-container">
+  <h1>InfoMagic</h1>
+  
+  <div class="error" id="error"></div>
+  <div class="success" id="success"></div>
+  
+  <form id="loginForm" onsubmit="handleLogin(event)">
+    <div class="form-group">
+      <label for="username">Användare</label>
+      <select id="username" name="username" required autofocus>
+        <option value="">Välj användare</option>
+        <option value="admin">Admin</option>
+        <option value="editor">Redaktör</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label for="password">Lösenord</label>
+      <input type="password" id="password" name="password" required>
+    </div>
+    
+    <button type="submit" id="submitBtn">Logga in</button>
+  </form>
+</div>
+
+<script>
+const errorDiv = document.getElementById('error');
+const successDiv = document.getElementById('success');
+const submitBtn = document.getElementById('submitBtn');
+
+function showError(msg) {
+  errorDiv.textContent = msg;
+  errorDiv.classList.add('show');
+  successDiv.classList.remove('show');
+}
+
+function showSuccess(msg) {
+  successDiv.textContent = msg;
+  successDiv.classList.add('show');
+  errorDiv.classList.remove('show');
+}
+
+function hideMessages() {
+  errorDiv.classList.remove('show');
+  successDiv.classList.remove('show');
+}
+
+async function handleLogin(event) {
+  event.preventDefault();
+  hideMessages();
+  
+  const username = document.getElementById('username').value;
+  const password = document.getElementById('password').value;
+  
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Loggar in...';
+  
+  try {
+    const response = await fetch('/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username, password })
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok) {
+      showSuccess('Inloggning lyckades! Omdirigerar...');
+      
+      // Redirect based on role
+      setTimeout(() => {
+        if (data.role === 'admin') {
+          window.location.href = '/ui/admin.html';
+        } else if (data.role === 'editor') {
+          window.location.href = '/ui/editor.html';
+        } else {
+          window.location.href = '/ui/admin.html';
+        }
+      }, 500);
+    } else {
+      showError(data.error || 'Inloggning misslyckades');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Logga in';
+    }
+  } catch (err) {
+    showError('Ett fel uppstod. Försök igen.');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Logga in';
+  }
+}
+</script>
+
+</body>
+</html>
+

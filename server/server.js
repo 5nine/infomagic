@@ -24,6 +24,20 @@ app.use(
 app.use('/images', express.static(path.join(__dirname, '../public/images')));
 app.use('/ui', express.static(path.join(__dirname, '../public/ui')));
 
+/* --- Root route - serve login page or redirect if logged in --- */
+app.get('/', (req, res) => {
+  if (req.session.user) {
+    // User is already logged in, redirect based on role
+    if (req.session.user.role === 'admin') {
+      return res.redirect('/ui/admin.html');
+    } else if (req.session.user.role === 'editor') {
+      return res.redirect('/ui/editor.html');
+    }
+  }
+  // Not logged in, serve login page
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
 /* --- Login --- */
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;

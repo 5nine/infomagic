@@ -2,7 +2,7 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 
-const { requireRole } = require('./auth');
+const { requireRole, verifyCredentials } = require('./auth');
 const { loadConfig, saveConfig } = require('./config');
 const { upload, handleUpload, listImages, deleteImage } = require('./images');
 const system = require('./system');
@@ -13,27 +13,43 @@ const PORT = 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(session({
-  secret: 'infomagic-secret',
-  resave: false,
-  saveUninitialized: false
-}));
+app.use(
+  session({
+    secret: 'infomagic-secret',
+    resave: false,
+    saveUninitialized: false,
+  }),
+);
 
 app.use('/images', express.static(path.join(__dirname, '../public/images')));
 app.use('/ui', express.static(path.join(__dirname, '../public/ui')));
 
-/* --- TEMP: enkel login för test --- */
-app.post('/login', (req, res) => {
-  const role = req.body.role === 'admin' ? 'admin' : 'editor';
-  req.session.user = { role };
-  res.json({ ok: true, role });
+/* --- Login --- */
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Användarnamn och lösenord krävs' });
+  }
+
+  const user = await verifyCredentials(username, password);
+
+  if (!user) {
+    return res
+      .status(401)
+      .json({ error: 'Felaktigt användarnamn eller lösenord' });
+  }
+
+  req.session.user = user;
+  res.json({ ok: true, role: user.role, username: user.username });
 });
 
 /* --- Images --- */
-app.post('/api/images/upload',
+app.post(
+  '/api/images/upload',
   requireRole(['admin', 'editor']),
   upload.array('images'),
-  handleUpload
+  handleUpload,
 );
 
 app.get('/api/images', listImages);
@@ -43,20 +59,14 @@ app.get('/api/config', (req, res) => {
   res.json(loadConfig());
 });
 
-app.post('/api/config',
-  requireRole(['admin']),
-  (req, res) => {
-    const cfg = loadConfig();
-    Object.assign(cfg, req.body);
-    saveConfig(cfg);
-    res.json({ ok: true });
-  }
-);
+app.post('/api/config', requireRole(['admin']), (req, res) => {
+  const cfg = loadConfig();
+  Object.assign(cfg, req.body);
+  saveConfig(cfg);
+  res.json({ ok: true });
+});
 
-app.delete('/api/images/:id',
-  requireRole(['admin','editor']),
-  deleteImage
-);
+app.delete('/api/images/:id', requireRole(['admin', 'editor']), deleteImage);
 
 const { getWeather } = require('./weather');
 
@@ -72,7 +82,6 @@ const slideshow = require('./slideshow');
 
 app.get('/api/slideshow', slideshow.getState);
 app.post('/api/slideshow', slideshow.control);
-
 
 /* --- System (admin only) --- */
 app.post('/api/system/reboot', requireRole(['admin']), system.reboot);

@@ -4,6 +4,7 @@ After=network-online.target infomagic-backend.service infomagic-x.service
 Requires=infomagic-x.service
 
 [Service]
+Type=simple
 User=@APP_USER@
 Environment=DISPLAY=:1
 ExecStart=/usr/bin/chromium \

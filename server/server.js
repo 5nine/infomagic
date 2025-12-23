@@ -23,6 +23,10 @@ app.use(
 
 app.use('/images', express.static(path.join(__dirname, '../public/images')));
 app.use('/ui', express.static(path.join(__dirname, '../public/ui')));
+app.use(
+  '/styles.css',
+  express.static(path.join(__dirname, '../public/styles.css')),
+);
 
 /* --- Root route - serve login page or redirect if logged in --- */
 app.get('/', (req, res) => {

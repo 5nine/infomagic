@@ -3,54 +3,9 @@
 <head>
 <meta charset="utf-8">
 <title>InfoMagic – Redaktör</title>
-<style>
-body {
-  background:#0f1412;
-  color:#cfd6d3;
-  font-family:system-ui,sans-serif;
-  padding:24px;
-}
-.logout-btn {
-  position:absolute;
-  top:24px;
-  right:24px;
-  background:#7a2f2f;
-  color:white;
-  border:none;
-  border-radius:6px;
-  padding:8px 16px;
-  cursor:pointer;
-  font-size:14px;
-}
-.logout-btn:hover {
-  background:#8a3f3f;
-}
-.grid {
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:20px;
-}
-.thumb {
-  position:relative;
-}
-.thumb img {
-  width:100%;
-  border-radius:12px;
-}
-.thumb button {
-  position:absolute;
-  top:6px;
-  right:6px;
-  background:#7a2f2f;
-  color:white;
-  border:none;
-  border-radius:50%;
-  width:28px;
-  height:28px;
-}
-</style>
+<link rel="stylesheet" href="/styles.css">
 </head>
-<body>
+<body class="editor-page">
 
 <button class="logout-btn" onclick="logout()">Logga ut</button>
 

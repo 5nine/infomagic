@@ -63,6 +63,7 @@ select {
   color: #cfd6d3;
   font-size: 16px;
   box-sizing: border-box;
+  margin-bottom: 10px;
 }
 
 input[type='text']:focus,
@@ -385,4 +386,8 @@ body.touch-page {
   align-items: center;
   font-size: 32px;
   user-select: none;
+}
+
+.admin-container {
+  max-width: 600px;
 }

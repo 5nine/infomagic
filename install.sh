@@ -14,7 +14,7 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
-APP_USER="infomagic"
+APP_USER="pi"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 APP_DIR="$SCRIPT_DIR"
 
@@ -24,13 +24,11 @@ echo "▶ Kör direkt från git-mappen:"
 echo "   $APP_DIR"
 
 # ─────────────────────────────────────
-# Skapa användare
+# Kontrollera att pi-användaren finns
 # ─────────────────────────────────────
 if ! id "$APP_USER" &>/dev/null; then
-  echo "▶ Skapar användare '$APP_USER'..."
-  useradd -m -s /bin/bash "$APP_USER"
-else
-  echo "▶ Användare '$APP_USER' finns redan"
+  echo "❌ Användaren '$APP_USER' finns inte"
+  exit 1
 fi
 
 # Add user to groups needed for DRM access

@@ -7,7 +7,7 @@ Wants=network.target
 Type=simple
 User=@APP_USER@
 WorkingDirectory=@APP_DIR@
-ExecStart=/usr/bin/node server/server.js
+ExecStart=/usr/bin/node @APP_DIR@/server/server.js
 Restart=always
 RestartSec=3
 Environment=NODE_ENV=production

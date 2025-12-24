@@ -99,9 +99,7 @@ fi
 if [ ! -f "$APP_DIR/config/users.json" ]; then
   echo "▶ Skapar config/users.json..."
   
-  sudo -u "$APP_USER" \
-    ADMIN_PASS="$ADMIN_PASS" \
-    EDITOR_PASS="$EDITOR_PASS" \
+  ADMIN_PASS="$ADMIN_PASS" EDITOR_PASS="$EDITOR_PASS" \
     bash <<EOF
 cd "$APP_DIR/server"
 node <<'NODEEOF'

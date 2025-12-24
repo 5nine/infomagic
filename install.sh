@@ -219,6 +219,48 @@ mkdir -p "$APP_DIR/public/images/originals" "$APP_DIR/public/images/thumbs"
 chown -R "$APP_USER:$APP_USER" "$APP_DIR/public/images"
 
 # ─────────────────────────────────────
+# Konfigurera auto-login för infomagic användare
+# ─────────────────────────────────────
+echo "▶ Konfigurerar auto-login för '$APP_USER'..."
+
+# Configure LightDM for desktop auto-login (Bookworm)
+if [ -f /etc/lightdm/lightdm.conf ]; then
+    # Backup original config
+    if [ ! -f /etc/lightdm/lightdm.conf.bak ]; then
+        cp /etc/lightdm/lightdm.conf /etc/lightdm/lightdm.conf.bak
+    fi
+    
+    # Update or add autologin-user setting
+    if grep -q "^autologin-user=" /etc/lightdm/lightdm.conf; then
+        sed -i "s/^autologin-user=.*/autologin-user=$APP_USER/" /etc/lightdm/lightdm.conf
+    else
+        # Add to [Seat:*] section
+        if grep -q "^\[Seat:\*\]" /etc/lightdm/lightdm.conf; then
+            sed -i "/^\[Seat:\*\]/a autologin-user=$APP_USER" /etc/lightdm/lightdm.conf
+        else
+            echo "" >> /etc/lightdm/lightdm.conf
+            echo "[Seat:*]" >> /etc/lightdm/lightdm.conf
+            echo "autologin-user=$APP_USER" >> /etc/lightdm/lightdm.conf
+        fi
+    fi
+    
+    # Ensure autologin-user-timeout is set (0 = no delay)
+    if grep -q "^autologin-user-timeout=" /etc/lightdm/lightdm.conf; then
+        sed -i "s/^autologin-user-timeout=.*/autologin-user-timeout=0/" /etc/lightdm/lightdm.conf
+    else
+        sed -i "/^autologin-user=$APP_USER/a autologin-user-timeout=0" /etc/lightdm/lightdm.conf
+    fi
+fi
+
+# Configure console auto-login (systemd)
+mkdir -p /etc/systemd/system/getty@tty1.service.d
+cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf <<EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin $APP_USER --noclear %I \$TERM
+EOF
+
+# ─────────────────────────────────────
 # Aktivera tjänster
 # ─────────────────────────────────────
 echo "▶ Aktiverar systemd-tjänster..."
@@ -233,7 +275,6 @@ chmod +x "$APP_DIR/startup.sh"
 chown "$APP_USER:$APP_USER" "$APP_DIR/startup.sh"
 
 echo "▶ Skapar desktop shortcut..."
-# Create desktop shortcut in user's Desktop and applications directory
 DESKTOP_DIR="/home/$APP_USER/Desktop"
 APPLICATIONS_DIR="/home/$APP_USER/.local/share/applications"
 mkdir -p "$DESKTOP_DIR" "$APPLICATIONS_DIR"
@@ -253,8 +294,7 @@ EOF
 chmod +x "$DESKTOP_DIR/InfoMagic-Startup.desktop"
 chown "$APP_USER:$APP_USER" "$DESKTOP_DIR/InfoMagic-Startup.desktop"
 
-# Also create in applications directory for menu access
-cp "$DESKTOP_DIR/InfoMagic-Startup.desktop" "$APPLICATIONS_DIR/InfoMagic-Startup.desktop"
+cp "$DESKTOP_DIR/InfoMagic-Startup.desktop" "$APPLICATIONS_DIR/"
 chown "$APP_USER:$APP_USER" "$APPLICATIONS_DIR/InfoMagic-Startup.desktop"
 
 echo

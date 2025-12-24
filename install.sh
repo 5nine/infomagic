@@ -33,6 +33,10 @@ else
   echo "▶ Användare '$APP_USER' finns redan"
 fi
 
+# Add user to groups needed for DRM access
+echo "▶ Lägger till användare i render och video grupper..."
+usermod -a -G render,video "$APP_USER"
+
 # ─────────────────────────────────────
 # Systemuppdatering + paket
 # ─────────────────────────────────────
@@ -203,12 +207,10 @@ HOME_DIR=$(getent passwd "$APP_USER" | cut -d: -f6)
 if [ -n "$HOME_DIR" ]; then
   if [ -f "$SCRIPT_DIR/weston-tv.ini" ]; then
     cp "$SCRIPT_DIR/weston-tv.ini" "$HOME_DIR/weston-tv.ini"
-    chown "$APP_USER:$APP_USER" "$HOME_DIR/weston-tv.ini"
     echo "  → Skapade $HOME_DIR/weston-tv.ini"
   fi
   if [ -f "$SCRIPT_DIR/weston-touch.ini" ]; then
     cp "$SCRIPT_DIR/weston-touch.ini" "$HOME_DIR/weston-touch.ini"
-    chown "$APP_USER:$APP_USER" "$HOME_DIR/weston-touch.ini"
     echo "  → Skapade $HOME_DIR/weston-touch.ini"
   fi
 else

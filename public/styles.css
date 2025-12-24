@@ -244,7 +244,7 @@ body.tv-page {
   height: 100%;
   object-fit: contain;
   opacity: 0;
-  transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 1.2s;
   will-change: opacity;
 }
 

@@ -207,6 +207,7 @@ echo "▶ Konfigurerar sudoers..."
 cat >/etc/sudoers.d/infomagic <<EOF
 $APP_USER ALL=(ALL) NOPASSWD:/usr/bin/cec-client
 $APP_USER ALL=(ALL) NOPASSWD:/usr/bin/tee
+$APP_USER ALL=(ALL) NOPASSWD:/usr/bin/xhost
 EOF
 chmod 440 /etc/sudoers.d/infomagic
 

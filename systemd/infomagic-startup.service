@@ -8,7 +8,6 @@ Type=oneshot
 RemainAfterExit=yes
 User=@APP_USER@
 SupplementaryGroups=video render
-Environment=DISPLAY=:0
 ExecStart=@APP_DIR@/startup.sh
 StandardOutput=journal
 StandardError=journal

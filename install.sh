@@ -137,7 +137,7 @@ unset EDITOR_PASS
 if [ ! -f "$APP_DIR/config/config.json" ]; then
   echo "▶ Skapar config/config.json..."
   
-  sudo -u "$APP_USER" bash <<EOF
+  bash <<EOF
 cd "$APP_DIR/server"
 node <<'NODEEOF'
 const fs = require('fs');

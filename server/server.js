@@ -21,6 +21,54 @@ app.use(
   }),
 );
 
+/* --- Helper middleware for HTML page authentication (redirects to login) --- */
+function requireRoleRedirect(allowedRoles) {
+  return (req, res, next) => {
+    if (!req.session.user) {
+      return res.redirect('/');
+    }
+    if (!allowedRoles.includes(req.session.user.role)) {
+      return res.redirect('/');
+    }
+    next();
+  };
+}
+
+/* --- HTML page routes (must be before static file serving) --- */
+// Admin page - requires admin role
+app.get('/ui/admin.html', requireRoleRedirect(['admin']), (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/ui/admin.html'));
+});
+
+// Editor page - requires editor role (admins also have access)
+app.get(
+  '/ui/editor.html',
+  requireRoleRedirect(['editor', 'admin']),
+  (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/ui/editor.html'));
+  },
+);
+
+// Login page - public access
+app.get('/ui/login.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/ui/login.html'));
+});
+
+// Touch page - public access (for touch interface)
+app.get('/ui/touch.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/ui/touch.html'));
+});
+
+// TV page - public access (for TV display)
+app.get('/ui/tv.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/ui/tv.html'));
+});
+
+// Index/login page - public access
+app.get('/index.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
 app.use('/images', express.static(path.join(__dirname, '../public/images')));
 app.use('/assets', express.static(path.join(__dirname, '../public/assets')));
 app.use('/ui', express.static(path.join(__dirname, '../public/ui')));

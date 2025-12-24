@@ -223,8 +223,13 @@ chown -R "$APP_USER:$APP_USER" "$APP_DIR/public/images"
 echo "▶ Aktiverar systemd-tjänster..."
 systemctl daemon-reload
 systemctl enable infomagic-backend
-systemctl enable infomagic-tv
-systemctl enable infomagic-touch
+
+# ─────────────────────────────────────
+# Installera startup.sh
+# ─────────────────────────────────────
+echo "▶ Installerar startup.sh..."
+chmod +x "$APP_DIR/startup.sh"
+chown "$APP_USER:$APP_USER" "$APP_DIR/startup.sh"
 
 echo
 echo "====================================="

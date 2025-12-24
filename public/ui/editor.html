@@ -1,59 +1,57 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="sv">
-<head>
-<meta charset="utf-8">
-<title>InfoMagic – Redaktör</title>
-<link rel="stylesheet" href="/styles.css">
-</head>
-<body class="editor-page">
+  <head>
+    <meta charset="utf-8" />
+    <title>InfoMagic – Redaktör</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="editor-page">
+    <button class="logout-btn" onclick="logout()">Logga ut</button>
 
-<button class="logout-btn" onclick="logout()">Logga ut</button>
+    <h1>Redaktör – Bilder</h1>
 
-<h1>Redaktör – Bilder</h1>
+    <input type="file" id="files" multiple />
+    <button onclick="upload()">Ladda upp</button>
 
-<input type="file" id="files" multiple>
-<button onclick="upload()">Ladda upp</button>
+    <hr />
 
-<hr>
+    <div class="grid" id="images"></div>
 
-<div class="grid" id="images"></div>
-
-<script>
-async function load() {
-  const imgs = await (await fetch('/api/images')).json();
-  const g = document.getElementById('images');
-  g.innerHTML='';
-  imgs.forEach(i=>{
-    const d=document.createElement('div');
-    d.className='thumb';
-    d.innerHTML=`
+    <script>
+      async function load() {
+        const imgs = await (await fetch('/api/images')).json();
+        const g = document.getElementById('images');
+        g.innerHTML = '';
+        imgs.forEach(i => {
+          const d = document.createElement('div');
+          d.className = 'thumb';
+          d.innerHTML = `
       <img src="${i.thumb}">
-      <button onclick="remove('${i.id}')">×</button>
+      <button onclick="remove('${i.id}')">✕</button>
     `;
-    g.appendChild(d);
-  });
-}
+          g.appendChild(d);
+        });
+      }
 
-async function upload() {
-  const f=document.getElementById('files').files;
-  const fd=new FormData();
-  for(const file of f) fd.append('images',file);
-  await fetch('/api/images/upload',{method:'POST',body:fd});
-  load();
-}
+      async function upload() {
+        const f = document.getElementById('files').files;
+        const fd = new FormData();
+        for (const file of f) fd.append('images', file);
+        await fetch('/api/images/upload', { method: 'POST', body: fd });
+        load();
+      }
 
-async function remove(id){
-  await fetch('/api/images/'+id,{method:'DELETE'});
-  load();
-}
+      async function remove(id) {
+        await fetch('/api/images/' + id, { method: 'DELETE' });
+        load();
+      }
 
-async function logout(){
-  await fetch('/logout',{method:'POST'});
-  window.location.href='/';
-}
+      async function logout() {
+        await fetch('/logout', { method: 'POST' });
+        window.location.href = '/';
+      }
 
-load();
-</script>
-
-</body>
+      load();
+    </script>
+  </body>
 </html>

@@ -16,8 +16,24 @@
         </svg>
       </div>
       <div class="btn" onclick="send('toggle')">
-        <svg viewBox="0 0 24 24" fill="currentColor" width="64" height="64">
+        <svg
+          id="play-icon"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          width="64"
+          height="64"
+          style="display: none"
+        >
           <path d="M8 5v14l11-7z" />
+        </svg>
+        <svg
+          id="pause-icon"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          width="64"
+          height="64"
+        >
+          <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
         </svg>
       </div>
       <div class="btn" onclick="send('next')">
@@ -55,6 +71,18 @@
         });
       }
 
+      function updatePlayPauseIcon(playing) {
+        const playIcon = document.getElementById('play-icon');
+        const pauseIcon = document.getElementById('pause-icon');
+        if (playing) {
+          playIcon.style.display = 'none';
+          pauseIcon.style.display = 'block';
+        } else {
+          playIcon.style.display = 'block';
+          pauseIcon.style.display = 'none';
+        }
+      }
+
       /* ───── WEBSOCKET CONNECTION ───── */
       function connectWebSocket() {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -69,9 +97,8 @@
           try {
             const data = JSON.parse(event.data);
             if (data.type === 'slideshow-state') {
-              // State updated in real-time
-              // Could be used for visual feedback in the future
-              console.log('Slideshow state updated:', data.state);
+              // Update play/pause icon based on state
+              updatePlayPauseIcon(data.state.playing);
             }
           } catch (err) {
             console.error('Error parsing WebSocket message:', err);

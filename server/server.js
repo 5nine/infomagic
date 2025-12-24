@@ -1,6 +1,8 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
+const http = require('http');
+const WebSocket = require('ws');
 
 const { requireRole, verifyCredentials } = require('./auth');
 const { loadConfig, saveConfig } = require('./config');
@@ -8,6 +10,7 @@ const { upload, handleUpload, listImages, deleteImage } = require('./images');
 const system = require('./system');
 
 const app = express();
+const server = http.createServer(app);
 const PORT = 3000;
 
 app.use(express.json());
@@ -165,6 +168,43 @@ const slideshow = require('./slideshow');
 app.get('/api/slideshow', slideshow.getState);
 app.post('/api/slideshow', slideshow.control);
 
+/* --- WebSocket server for real-time communication --- */
+const wss = new WebSocket.Server({ server });
+
+// Broadcast function to send state to all connected clients
+function broadcastState(state) {
+  const message = JSON.stringify({ type: 'slideshow-state', state });
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  });
+}
+
+// Set up the broadcast callback in slideshow module
+slideshow.setBroadcastCallback(broadcastState);
+
+// Handle WebSocket connections
+wss.on('connection', ws => {
+  // Send current state immediately when client connects
+  const currentState = slideshow.getStateSync();
+  ws.send(JSON.stringify({ type: 'slideshow-state', state: currentState }));
+
+  // Handle incoming messages (if needed in the future)
+  ws.on('message', message => {
+    try {
+      const data = JSON.parse(message);
+      // Handle client messages if needed
+    } catch (err) {
+      console.error('Invalid WebSocket message:', err);
+    }
+  });
+
+  ws.on('error', err => {
+    console.error('WebSocket error:', err);
+  });
+});
+
 /* --- System (admin only) --- */
 app.post('/api/system/reboot', requireRole(['admin']), system.reboot);
 app.post('/api/system/tv/on', requireRole(['admin']), system.tvOn);
@@ -172,6 +212,7 @@ app.post('/api/system/tv/off', requireRole(['admin']), system.tvOff);
 app.post('/api/system/touch/on', requireRole(['admin']), system.touchOn);
 app.post('/api/system/touch/off', requireRole(['admin']), system.touchOff);
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`InfoMagic backend running on port ${PORT}`);
+  console.log(`WebSocket server ready for real-time communication`);
 });

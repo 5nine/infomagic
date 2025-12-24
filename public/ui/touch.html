@@ -28,6 +28,8 @@
     </div>
 
     <script>
+      let ws = null;
+
       /* ───── THUMBNAILS ───── */
       async function loadThumbs() {
         const imgs = await (await fetch('/api/images')).json();
@@ -49,9 +51,46 @@
         });
       }
 
+      /* ───── WEBSOCKET CONNECTION ───── */
+      function connectWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}`;
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          console.log('WebSocket connected');
+        };
+
+        ws.onmessage = event => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'slideshow-state') {
+              // State updated in real-time
+              // Could be used for visual feedback in the future
+              console.log('Slideshow state updated:', data.state);
+            }
+          } catch (err) {
+            console.error('Error parsing WebSocket message:', err);
+          }
+        };
+
+        ws.onerror = err => {
+          console.error('WebSocket error:', err);
+        };
+
+        ws.onclose = () => {
+          console.log('WebSocket disconnected, reconnecting...');
+          // Reconnect after 3 seconds
+          setTimeout(connectWebSocket, 3000);
+        };
+      }
+
       /* ───── INIT ───── */
       loadThumbs();
       setInterval(loadThumbs, 5000);
+
+      // Connect to WebSocket for real-time communication
+      connectWebSocket();
     </script>
   </body>
 </html>

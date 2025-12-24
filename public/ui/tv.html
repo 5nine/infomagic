@@ -31,6 +31,9 @@
       let images = [];
       let slideshowIntervalMs = 5000; // fallback
       let lastAdvance = 0;
+      let currentState = { index: 0, playing: true };
+      let ws = null;
+
       async function loadConfig() {
         const cfg = await (await fetch('/api/config')).json();
         slideshowIntervalMs = (cfg.slideshowInterval || 5) * 1000;
@@ -40,23 +43,61 @@
         images = await (await fetch('/api/images')).json();
       }
 
-      /* ───── SLIDESHOW (STATE I BACKEND) ───── */
-      async function updateSlide() {
+      /* ───── WEBSOCKET CONNECTION ───── */
+      function connectWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}`;
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          console.log('WebSocket connected');
+        };
+
+        ws.onmessage = event => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'slideshow-state') {
+              currentState = data.state;
+              updateSlideDisplay();
+            }
+          } catch (err) {
+            console.error('Error parsing WebSocket message:', err);
+          }
+        };
+
+        ws.onerror = err => {
+          console.error('WebSocket error:', err);
+        };
+
+        ws.onclose = () => {
+          console.log('WebSocket disconnected, reconnecting...');
+          // Reconnect after 3 seconds
+          setTimeout(connectWebSocket, 3000);
+        };
+      }
+
+      /* ───── SLIDESHOW DISPLAY UPDATE ───── */
+      function updateSlideDisplay() {
         if (!images.length) return;
 
-        const state = await (await fetch('/api/slideshow')).json();
         const idx =
-          ((state.index % images.length) + images.length) % images.length;
+          ((currentState.index % images.length) + images.length) %
+          images.length;
 
         slide.src = images[idx].original;
         document.documentElement.style.setProperty(
           '--blur-image',
           `url(${images[idx].original})`,
         );
+      }
+
+      /* ───── SLIDESHOW AUTO-ADVANCE ───── */
+      async function checkAutoAdvance() {
+        if (!images.length) return;
 
         const now = Date.now();
 
-        if (state.playing && now - lastAdvance >= slideshowIntervalMs) {
+        if (currentState.playing && now - lastAdvance >= slideshowIntervalMs) {
           await fetch('/api/slideshow', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -109,11 +150,14 @@
       (async () => {
         await loadImages();
         await loadConfig();
-        await updateSlide();
+        updateSlideDisplay();
         lastAdvance = Date.now();
 
+        // Connect to WebSocket for real-time updates
+        connectWebSocket();
+
         setInterval(loadImages, 5000);
-        setInterval(updateSlide, 1000);
+        setInterval(checkAutoAdvance, 1000);
 
         loadCalendar();
         loadWeather();

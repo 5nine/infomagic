@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
 const multer = require('multer');
-const { loadConfig } = require('./config');
+const { loadConfig, saveConfig } = require('./config');
 
 const IMAGE_ROOT = path.join(__dirname, '../public/images');
 const ORIGINALS = path.join(IMAGE_ROOT, 'originals');
@@ -55,6 +55,16 @@ async function handleUpload(req, res) {
         .resize(320, 320, { fit: 'cover', position: 'centre' })
         .toFile(thumb);
 
+      // Add new image to the order array
+      const cfg = loadConfig();
+      if (!cfg.imageOrder) {
+        cfg.imageOrder = [];
+      }
+      if (!cfg.imageOrder.includes(file.originalname)) {
+        cfg.imageOrder.push(file.originalname);
+        saveConfig(cfg);
+      }
+
       results.push({ file: file.originalname, ok: true });
     } catch (err) {
       results.push({ file: file.originalname, ok: false, error: err.message });
@@ -70,11 +80,30 @@ async function handleUpload(req, res) {
 }
 
 function listImagesSync() {
-  const files = fs
-    .readdirSync(ORIGINALS)
-    .filter(f => !f.startsWith('.'))
-    .sort((a, b) => a.localeCompare(b, 'sv'));
-  return files.map(f => ({
+  const cfg = loadConfig();
+  const files = fs.readdirSync(ORIGINALS).filter(f => !f.startsWith('.'));
+
+  // Get stored image order from config, or use alphabetical as fallback
+  const imageOrder = cfg.imageOrder || [];
+
+  // Sort files according to stored order, with new files appended at the end
+  const sortedFiles = files.sort((a, b) => {
+    const indexA = imageOrder.indexOf(a);
+    const indexB = imageOrder.indexOf(b);
+
+    // If both are in the order array, sort by their position
+    if (indexA !== -1 && indexB !== -1) {
+      return indexA - indexB;
+    }
+    // If only A is in the order array, A comes first
+    if (indexA !== -1) return -1;
+    // If only B is in the order array, B comes first
+    if (indexB !== -1) return 1;
+    // If neither is in the order array, sort alphabetically
+    return a.localeCompare(b, 'sv');
+  });
+
+  return sortedFiles.map(f => ({
     id: f,
     original: `/images/originals/${f}`,
     thumb: `/images/thumbs/${f}`,
@@ -95,6 +124,13 @@ function deleteImage(req, res) {
     if (fs.existsSync(orig)) fs.unlinkSync(orig);
     if (fs.existsSync(thumb)) fs.unlinkSync(thumb);
 
+    // Remove from image order if it exists
+    const cfg = loadConfig();
+    if (cfg.imageOrder) {
+      cfg.imageOrder = cfg.imageOrder.filter(id => id !== f);
+      saveConfig(cfg);
+    }
+
     // Broadcast image list update after successful deletion
     broadcastImageList();
 
@@ -105,11 +141,35 @@ function deleteImage(req, res) {
   }
 }
 
+function updateImageOrder(req, res) {
+  try {
+    const { order } = req.body;
+    if (!Array.isArray(order)) {
+      return res
+        .status(400)
+        .json({ ok: false, error: 'Order must be an array' });
+    }
+
+    const cfg = loadConfig();
+    cfg.imageOrder = order;
+    saveConfig(cfg);
+
+    // Broadcast image list update after successful reordering
+    broadcastImageList();
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Update order failed:', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+}
+
 module.exports = {
   upload,
   handleUpload,
   listImages,
   listImagesSync,
   deleteImage,
+  updateImageOrder,
   setBroadcastCallback,
 };

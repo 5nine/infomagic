@@ -18,19 +18,80 @@
     <div class="grid" id="images"></div>
 
     <script>
+      let imageList = [];
+      let draggedElement = null;
+
       async function load() {
-        const imgs = await (await fetch('/api/images')).json();
+        imageList = await (await fetch('/api/images')).json();
         const g = document.getElementById('images');
         g.innerHTML = '';
-        imgs.forEach(i => {
+        imageList.forEach((i, index) => {
           const d = document.createElement('div');
           d.className = 'thumb';
+          d.draggable = true;
+          d.dataset.index = index;
           d.innerHTML = `
       <img src="${i.thumb}">
       <button onclick="remove('${i.id}')">✕</button>
     `;
+
+          // Add drag event listeners
+          d.addEventListener('dragstart', handleDragStart);
+          d.addEventListener('dragover', handleDragOver);
+          d.addEventListener('drop', handleDrop);
+          d.addEventListener('dragend', handleDragEnd);
+
           g.appendChild(d);
         });
+      }
+
+      function handleDragStart(e) {
+        draggedElement = this;
+        this.style.opacity = '0.5';
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', this.innerHTML);
+      }
+
+      function handleDragOver(e) {
+        if (e.preventDefault) {
+          e.preventDefault();
+        }
+        e.dataTransfer.dropEffect = 'move';
+        return false;
+      }
+
+      function handleDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (draggedElement && draggedElement !== this) {
+          const draggedIndex = parseInt(draggedElement.dataset.index);
+          const targetIndex = parseInt(this.dataset.index);
+
+          // Reorder the imageList array
+          const [movedItem] = imageList.splice(draggedIndex, 1);
+          imageList.splice(targetIndex, 0, movedItem);
+
+          // Update the order on the server
+          const order = imageList.map(img => img.id);
+          fetch('/api/images/order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order }),
+          });
+
+          // Reload to reflect the new order
+          load();
+        }
+
+        return false;
+      }
+
+      function handleDragEnd(e) {
+        if (draggedElement) {
+          draggedElement.style.opacity = '1';
+          draggedElement = null;
+        }
       }
 
       async function upload() {

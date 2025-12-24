@@ -6,7 +6,13 @@ const WebSocket = require('ws');
 
 const { requireRole, verifyCredentials } = require('./auth');
 const { loadConfig, saveConfig } = require('./config');
-const { upload, handleUpload, listImages, deleteImage } = require('./images');
+const {
+  upload,
+  handleUpload,
+  listImages,
+  deleteImage,
+  updateImageOrder,
+} = require('./images');
 const system = require('./system');
 
 const app = express();
@@ -133,6 +139,12 @@ app.post(
 );
 
 app.get('/api/images', listImages);
+
+app.post(
+  '/api/images/order',
+  requireRole(['admin', 'editor']),
+  updateImageOrder,
+);
 
 /* --- Config --- */
 app.get('/api/config', (req, res) => {

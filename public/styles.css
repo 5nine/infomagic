@@ -173,6 +173,12 @@ body.editor-page {
 
 .thumb {
   position: relative;
+  cursor: move;
+  transition: opacity 0.2s;
+}
+
+.thumb.dragging {
+  opacity: 0.5;
 }
 
 .thumb img {

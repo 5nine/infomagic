@@ -15,16 +15,17 @@ html {
   height: 100%;
 }
 
-/* Hide scrollbar for all browsers */
-html,
-body {
+/* Hide scrollbar for all browsers - universal approach */
+* {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
 }
 
-html::-webkit-scrollbar,
-body::-webkit-scrollbar {
+*::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
+  background: transparent;
 }
 
 /* ───── LOGIN PAGE ───── */
@@ -348,20 +349,22 @@ body.tv-page {
 /* ───── TOUCH PAGE ───── */
 body.touch-page {
   height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* THUMB GRID */
 #thumbs {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 24px;
   padding: 24px;
   padding-bottom: 200px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .touch-page .thumb {
-  width: 320px;
-  flex-shrink: 0;
   aspect-ratio: 1/1;
   border-radius: 18px;
   overflow: hidden;

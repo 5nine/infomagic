@@ -47,8 +47,7 @@ echo "▶ Installerar beroenden..."
 apt install -y \
   nodejs npm \
   chromium \
-  weston \
-  seatd \
+  xorg \
   cec-utils \
   git \
   rsync
@@ -200,23 +199,6 @@ for service_file in "$SCRIPT_DIR/systemd"/*.service; do
   fi
 done
 
-# ─────────────────────────────────────
-# Weston-konfigurationer
-# ─────────────────────────────────────
-echo "▶ Skapar Weston-konfigurationer..."
-HOME_DIR=$(getent passwd "$APP_USER" | cut -d: -f6)
-if [ -n "$HOME_DIR" ]; then
-  if [ -f "$SCRIPT_DIR/weston-tv.ini" ]; then
-    cp "$SCRIPT_DIR/weston-tv.ini" "$HOME_DIR/weston-tv.ini"
-    echo "  → Skapade $HOME_DIR/weston-tv.ini"
-  fi
-  if [ -f "$SCRIPT_DIR/weston-touch.ini" ]; then
-    cp "$SCRIPT_DIR/weston-touch.ini" "$HOME_DIR/weston-touch.ini"
-    echo "  → Skapade $HOME_DIR/weston-touch.ini"
-  fi
-else
-  echo "  ⚠️ Kunde inte hitta hemkatalog för $APP_USER"
-fi
 
 # ─────────────────────────────────────
 # sudoers
@@ -234,13 +216,6 @@ chmod 440 /etc/sudoers.d/infomagic
 echo "▶ Kontrollerar bildmappar..."
 mkdir -p "$APP_DIR/public/images/originals" "$APP_DIR/public/images/thumbs"
 chown -R "$APP_USER:$APP_USER" "$APP_DIR/public/images"
-
-# ─────────────────────────────────────
-# Aktivera seatd för Weston DRM support
-# ─────────────────────────────────────
-echo "▶ Aktiverar seatd för Weston DRM support..."
-systemctl enable seatd
-systemctl start seatd
 
 # ─────────────────────────────────────
 # Aktivera tjänster

@@ -6,8 +6,9 @@ After=network-online.target infomagic-backend.service
 Type=simple
 User=@APP_USER@
 SupplementaryGroups=video render
-Environment=WAYLAND_DISPLAY=wayland-tv
-ExecStart=/usr/bin/weston --config=/home/@APP_USER@/weston-tv.ini --socket=wayland-tv -- /usr/bin/chromium --kiosk --password-store=basic --use-mock-keychain http://localhost:3000/ui/tv.html
+Environment=DISPLAY=:0
+ExecStartPre=/bin/bash -c 'if ! pgrep -x Xorg > /dev/null; then /usr/bin/Xorg :0 -nolisten tcp vt7 & sleep 2; fi'
+ExecStart=/usr/bin/chromium --kiosk --password-store=basic --use-mock-keychain --window-position=1280,0 http://localhost:3000/ui/tv.html
 Restart=always
 RestartSec=5
 

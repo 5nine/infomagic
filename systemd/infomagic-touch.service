@@ -8,14 +8,12 @@ Type=simple
 User=@APP_USER@
 Environment=DISPLAY=:1
 ExecStart=/usr/bin/chromium \
+  --password-store=basic \
+  --use-mock-keychain \
+  --user-data-dir=/home/pi/.config/chromium-tv
   --kiosk \
-  --window-position=1920,0 \
-  --window-size=1280,720 \
   --noerrdialogs \
-  --disable-infobars \
   --disable-session-crashed-bubble \
-  --disable-translate \
-  --disable-features=TranslateUI \
   http://localhost:3000/ui/touch.html
 Restart=always
 RestartSec=5

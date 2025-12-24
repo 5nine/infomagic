@@ -13,7 +13,6 @@ body {
 
 html {
   height: 100%;
-  overflow: hidden;
 }
 
 /* ───── LOGIN PAGE ───── */
@@ -341,21 +340,17 @@ body.touch-page {
 
 /* THUMB GRID */
 #thumbs {
-  height: calc(100vh - 150px);
-  overflow-y: auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-wrap: wrap;
   gap: 24px;
   padding: 24px;
-  scrollbar-width: none;
-}
-
-#thumbs::-webkit-scrollbar {
-  display: none;
+  padding-bottom: 200px;
 }
 
 .touch-page .thumb {
-  height: 320px;
+  width: 320px;
+  flex-shrink: 0;
+  aspect-ratio: 1/1;
   border-radius: 18px;
   overflow: hidden;
   border: 2px solid #1f2623;
@@ -373,6 +368,11 @@ body.touch-page {
 /* CONTROLS */
 #controls {
   height: 150px;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: #0b0f0d;
   border-top: 1px solid #1f2623;
   display: flex;
   justify-content: space-evenly;

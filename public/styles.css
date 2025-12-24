@@ -228,13 +228,29 @@ body.tv-page {
   transform: scale(1.15);
 }
 
-#image #slide {
+#slide-container {
   position: relative;
+  width: 100%;
+  height: 100%;
   z-index: 1;
+}
+
+#image #slide,
+#image #slide-next {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;
-  display: block;
+  opacity: 0;
+  transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity;
+}
+
+#image #slide.active,
+#image #slide-next.active {
+  opacity: 1;
 }
 
 /* LOGGA */

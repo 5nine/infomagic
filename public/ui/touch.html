@@ -65,7 +65,7 @@
           d.dataset.index = idx;
           d.innerHTML = `<img src="${img.thumb}">`;
           d.onclick = () => {
-            send(idx);
+            send(Number(idx));
           };
           thumbs.appendChild(d);
         });
@@ -78,6 +78,15 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action }),
         });
+
+        // Reset interval when manually navigating (image clicked or prev/next)
+        if (
+          typeof action === 'number' ||
+          action === 'prev' ||
+          action === 'next'
+        ) {
+          lastAdvance = Date.now();
+        }
       }
 
       function updatePlayPauseIcon(playing) {

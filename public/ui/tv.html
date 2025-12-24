@@ -12,7 +12,10 @@
         <div id="logo">
           <img src="/assets/sj_logo.png" alt="Själevadsbygg" />
         </div>
-        <img id="slide" />
+        <div id="slide-container">
+          <img id="slide" class="slide-image" />
+          <img id="slide-next" class="slide-image" />
+        </div>
       </div>
 
       <div id="side">
@@ -80,11 +83,23 @@
           ((currentState.index % images.length) + images.length) %
           images.length;
 
-        slide.src = images[idx].original;
+        const slideNext = document.getElementById('slide-next');
+        const currentSlide =
+          document.querySelector('.slide-image.active') || slide;
+        const nextSlide = currentSlide === slide ? slideNext : slide;
+
+        // Set the new image source
+        nextSlide.src = images[idx].original;
+
+        // Update blur background
         document.documentElement.style.setProperty(
           '--blur-image',
           `url(${images[idx].original})`,
         );
+
+        // Trigger transition
+        currentSlide.classList.remove('active');
+        nextSlide.classList.add('active');
       }
 
       /* ───── KALENDER ───── */
@@ -129,6 +144,9 @@
       /* ───── INIT ───── */
       (async () => {
         await loadImages();
+
+        // Initialize first slide
+        slide.classList.add('active');
 
         // Connect to WebSocket for real-time updates
         connectWebSocket();

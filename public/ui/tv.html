@@ -1,97 +1,95 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="sv">
-<head>
-<meta charset="utf-8">
-<title>InfoMagic – TV</title>
-<link rel="stylesheet" href="/styles.css">
-</head>
+  <head>
+    <meta charset="utf-8" />
+    <title>InfoMagic – TV</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
 
-<body class="tv-page">
-<div id="layout">
+  <body class="tv-page">
+    <div id="layout">
+      <div id="image">
+        <div id="logo">
+          <img src="/assets/sj_logo.png" alt="Själevadsbygg" />
+        </div>
+        <img id="slide" />
+      </div>
 
-  <div id="image">
-    <div id="logo">
-      <img src="/assets/sj_logo.png" alt="Själevadsbygg">
+      <div id="side">
+        <div id="calendar-wrap">
+          <iframe id="calendar"></iframe>
+        </div>
+
+        <div id="weather">
+          <h3>Örnsköldsvik – 5 dagar</h3>
+          <div id="weatherRows"></div>
+        </div>
+      </div>
     </div>
-    <img id="slide">
-  </div>
 
-  <div id="side">
+    <script>
+      let images = [];
+      let slideshowIntervalMs = 5000; // fallback
+      let lastAdvance = 0;
+      async function loadConfig() {
+        const cfg = await (await fetch('/api/config')).json();
+        slideshowIntervalMs = (cfg.slideshowInterval || 5) * 1000;
+      }
+      /* ───── BILDER ───── */
+      async function loadImages() {
+        images = await (await fetch('/api/images')).json();
+      }
 
-    <div id="calendar-wrap">
-      <iframe id="calendar"></iframe>
-    </div>
+      /* ───── SLIDESHOW (STATE I BACKEND) ───── */
+      async function updateSlide() {
+        if (!images.length) return;
 
-    <div id="weather">
-      <h3>Örnsköldsvik – 5 dagar</h3>
-      <div id="weatherRows"></div>
-    </div>
+        const state = await (await fetch('/api/slideshow')).json();
+        const idx =
+          ((state.index % images.length) + images.length) % images.length;
 
-  </div>
-</div>
+        slide.src = images[idx].original;
+        document.documentElement.style.setProperty(
+          '--blur-image',
+          `url(${images[idx].original})`,
+        );
 
-<script>
-let images = [];
-let slideshowIntervalMs = 5000; // fallback
-let lastAdvance = 0;
-async function loadConfig(){
-  const cfg = await (await fetch('/api/config')).json();
-  slideshowIntervalMs = (cfg.slideshowInterval || 5) * 1000;
-}
-/* ───── BILDER ───── */
-async function loadImages(){
-  images = await (await fetch('/api/images')).json();
-}
+        const now = Date.now();
 
-/* ───── SLIDESHOW (STATE I BACKEND) ───── */
-async function updateSlide(){
-  if(!images.length) return;
+        if (state.playing && now - lastAdvance >= slideshowIntervalMs) {
+          await fetch('/api/slideshow', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'next' }),
+          });
+          lastAdvance = now;
+        }
+      }
 
-  const state = await (await fetch('/api/slideshow')).json();
-  const idx = ((state.index % images.length) + images.length) % images.length;
+      /* ───── KALENDER ───── */
+      async function loadCalendar() {
+        const cfg = await (await fetch('/api/config')).json();
+        const p = new URLSearchParams({
+          ctz: 'Europe/Stockholm',
+          mode: cfg.calendar.view,
+          showTitle: 0,
+          showNav: 0,
+          showDate: 0,
+          showTabs: 0,
+          showCalendars: 0,
+          showTz: 0,
+          src: cfg.calendar.calendarId,
+          showPrint: 0,
+        });
+        calendar.src = 'https://calendar.google.com/calendar/embed?' + p;
+      }
 
-  slide.src = images[idx].original;
-  document.documentElement.style.setProperty(
-    '--blur-image',
-    `url(${images[idx].original})`
-  );
-
-	const now = Date.now();
-
-	if(state.playing && now - lastAdvance >= slideshowIntervalMs){
-	  await fetch('/api/slideshow',{
-		method:'POST',
-		headers:{'Content-Type':'application/json'},
-		body:JSON.stringify({ action:'next' })
-	  });
-	  lastAdvance = now;
-	}
-}
-
-/* ───── KALENDER ───── */
-async function loadCalendar(){
-  const cfg = await (await fetch('/api/config')).json();
-  const p = new URLSearchParams({
-    ctz:'Europe/Stockholm',
-    mode:cfg.calendar.view,
-    showTitle:0,
-    showNav:0,
-    showDate:0,
-    showTabs:0,
-    showCalendars:0,
-    showTz:0,
-    src:cfg.calendar.calendarId
-  });
-  calendar.src =
-    'https://calendar.google.com/calendar/embed?' + p;
-}
-
-/* ───── VÄDER ───── */
-async function loadWeather(){
-  const data = await (await fetch('/api/weather')).json();
-  weatherRows.innerHTML='';
-  data.forEach(d=>{
-    weatherRows.innerHTML+=`
+      /* ───── VÄDER ───── */
+      async function loadWeather() {
+        const data = await (await fetch('/api/weather')).json();
+        weatherRows.innerHTML = '';
+        data.forEach(d => {
+          weatherRows.innerHTML += `
       <div class="weather-day">
         <div class="weather-left">
           <svg class="weather-icon" viewBox="0 0 24 24">
@@ -104,23 +102,23 @@ async function loadWeather(){
           ${Math.round(d.min)}° / ${Math.round(d.max)}°
         </div>
       </div>`;
-  });
-}
+        });
+      }
 
-/* ───── INIT ───── */
-(async()=>{
-  await loadImages();
-  await loadConfig();
-  await updateSlide();
-  lastAdvance = Date.now();
+      /* ───── INIT ───── */
+      (async () => {
+        await loadImages();
+        await loadConfig();
+        await updateSlide();
+        lastAdvance = Date.now();
 
-  setInterval(loadImages, 5000);
-  setInterval(updateSlide, 1000);
+        setInterval(loadImages, 5000);
+        setInterval(updateSlide, 1000);
 
-  loadCalendar();
-  loadWeather();
-  setInterval(loadWeather, 30*60*1000);
-})();
-</script>
-</body>
+        loadCalendar();
+        loadWeather();
+        setInterval(loadWeather, 30 * 60 * 1000);
+      })();
+    </script>
+  </body>
 </html>

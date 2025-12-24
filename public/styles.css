@@ -392,6 +392,7 @@ body.touch-page {
   overflow: hidden;
   border: 2px solid #1f2623;
   background: #111715;
+  cursor: pointer;
 }
 
 .touch-page .thumb img {

@@ -17,7 +17,7 @@ if [ -n "$TOUCH_DEVICE" ]; then
   echo "Found touch device: $TOUCH_DEVICE"
   # Map touch device to DSI-1 display only
   # This ensures touch input only affects the touch screen, not the TV
-  xinput map-to-output "$TOUCH_DEVICE" DSI-1
+  xinput map-to-output "pointer:$TOUCH_DEVICE" DSI-1
   echo "Mapped touch device to DSI-1 display"
 else
   echo "Warning: Touch device not found, skipping touch configuration"

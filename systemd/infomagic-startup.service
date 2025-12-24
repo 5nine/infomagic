@@ -1,0 +1,16 @@
+[Unit]
+Description=InfoMagic Display Startup
+After=network-online.target infomagic-backend.service
+Requires=infomagic-backend.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=@APP_USER@
+SupplementaryGroups=video render
+Environment=DISPLAY=:0
+ExecStart=@APP_DIR@/startup.sh
+
+[Install]
+WantedBy=multi-user.target
+

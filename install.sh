@@ -70,10 +70,9 @@ fi
 # Node dependencies
 # ─────────────────────────────────────
 echo "▶ Installerar Node-beroenden (server/)..."
-sudo -u "$APP_USER" bash <<EOF
 cd "$APP_DIR/server"
-npm install
-EOF
+npm install --frozen-lockfile
+cd "$APP_DIR"
 
 # ─────────────────────────────────────
 # Skapa lösenord

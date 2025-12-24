@@ -34,10 +34,14 @@
       async function loadThumbs() {
         const imgs = await (await fetch('/api/images')).json();
         thumbs.innerHTML = '';
-        imgs.forEach(img => {
-          const d = document.createElement('div');
+        imgs.forEach((img, idx) => {
+          const d = document.createElement('button');
           d.className = 'thumb';
+          d.dataset.index = idx;
           d.innerHTML = `<img src="${img.thumb}">`;
+          d.onclick = () => {
+            send(idx);
+          };
           thumbs.appendChild(d);
         });
       }

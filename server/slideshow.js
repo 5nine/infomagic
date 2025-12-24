@@ -29,6 +29,7 @@ function control(req, res) {
   if (action === 'next') state.index++;
   if (action === 'prev') state.index = Math.max(0, state.index - 1);
   if (action === 'toggle') state.playing = !state.playing;
+  if (typeof action === 'number') state.index = action;
 
   // Broadcast state change to all connected WebSocket clients
   broadcastState();

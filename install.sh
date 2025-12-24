@@ -53,7 +53,22 @@ apt install -y \
 # ─────────────────────────────────────
 echo "▶ Installerar InfoMagic till $APP_DIR..."
 mkdir -p "$APP_DIR"
-rsync -a --delete --exclude='.git' "$SCRIPT_DIR/" "$APP_DIR/"
+
+# Sync files but preserve user-modified content:
+# - Exclude .git
+# - Exclude config/ (will be handled separately)
+# - Exclude public/images/ (user uploaded images)
+# - Don't use --delete to preserve any extra files
+rsync -a \
+  --exclude='.git' \
+  --exclude='config/' \
+  --exclude='public/images/' \
+  "$SCRIPT_DIR/" "$APP_DIR/"
+
+# Ensure directories exist
+mkdir -p "$APP_DIR/config"
+mkdir -p "$APP_DIR/public/images/originals" "$APP_DIR/public/images/thumbs"
+
 chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 
 if [ ! -f "$APP_DIR/server/package.json" ]; then
@@ -73,25 +88,34 @@ EOF
 # ─────────────────────────────────────
 # Skapa lösenord
 # ─────────────────────────────────────
-echo
-echo "====================================="
-echo "🔐 Skapa inloggningar för InfoMagic"
-echo "====================================="
+# Only prompt for passwords if users.json doesn't exist
+if [ ! -f "$APP_DIR/config/users.json" ]; then
+  echo
+  echo "====================================="
+  echo "🔐 Skapa inloggningar för InfoMagic"
+  echo "====================================="
+  read -s -p "Ange ADMIN-lösenord: " ADMIN_PASS; echo
+  read -s -p "Bekräfta ADMIN-lösenord: " ADMIN_PASS2; echo
+  [[ "$ADMIN_PASS" == "$ADMIN_PASS2" ]] || { echo "❌ ADMIN-lösenorden matchar inte"; exit 1; }
 
-read -s -p "Ange ADMIN-lösenord: " ADMIN_PASS; echo
-read -s -p "Bekräfta ADMIN-lösenord: " ADMIN_PASS2; echo
-[[ "$ADMIN_PASS" == "$ADMIN_PASS2" ]] || { echo "❌ ADMIN-lösenorden matchar inte"; exit 1; }
+  read -s -p "Ange EDITOR-lösenord: " EDITOR_PASS; echo
+  read -s -p "Bekräfta EDITOR-lösenord: " EDITOR_PASS2; echo
+  [[ "$EDITOR_PASS" == "$EDITOR_PASS2" ]] || { echo "❌ EDITOR-lösenorden matchar inte"; exit 1; }
+else
+  echo "▶ Använder befintliga lösenord från config/users.json"
+  # Set dummy values to avoid errors in the script
+  ADMIN_PASS=""
+  EDITOR_PASS=""
+fi
 
-read -s -p "Ange EDITOR-lösenord: " EDITOR_PASS; echo
-read -s -p "Bekräfta EDITOR-lösenord: " EDITOR_PASS2; echo
-[[ "$EDITOR_PASS" == "$EDITOR_PASS2" ]] || { echo "❌ EDITOR-lösenorden matchar inte"; exit 1; }
-
-echo "▶ Skapar config/users.json..."
-
-sudo -u "$APP_USER" \
-  ADMIN_PASS="$ADMIN_PASS" \
-  EDITOR_PASS="$EDITOR_PASS" \
-  bash <<EOF
+# Only create users.json if it doesn't exist
+if [ ! -f "$APP_DIR/config/users.json" ]; then
+  echo "▶ Skapar config/users.json..."
+  
+  sudo -u "$APP_USER" \
+    ADMIN_PASS="$ADMIN_PASS" \
+    EDITOR_PASS="$EDITOR_PASS" \
+    bash <<EOF
 cd "$APP_DIR/server"
 node <<'NODEEOF'
 const fs = require('fs');
@@ -117,13 +141,18 @@ fs.writeFileSync('../config/users.json', JSON.stringify(out, null, 2));
 console.log('✔ users.json skapad');
 NODEEOF
 EOF
+else
+  echo "▶ config/users.json finns redan - behåller befintlig fil"
+fi
 
 unset ADMIN_PASS
 unset EDITOR_PASS
 
-echo "▶ Skapar config/config.json..."
-
-sudo -u "$APP_USER" bash <<EOF
+# Only create config.json if it doesn't exist
+if [ ! -f "$APP_DIR/config/config.json" ]; then
+  echo "▶ Skapar config/config.json..."
+  
+  sudo -u "$APP_USER" bash <<EOF
 cd "$APP_DIR/server"
 node <<'NODEEOF'
 const fs = require('fs');
@@ -146,6 +175,9 @@ fs.writeFileSync('../config/config.json', JSON.stringify(config, null, 2));
 console.log('✔ config.json skapad');
 NODEEOF
 EOF
+else
+  echo "▶ config/config.json finns redan - behåller befintlig fil"
+fi
 
 # ─────────────────────────────────────
 # systemd-tjänster
@@ -176,7 +208,7 @@ chmod 440 /etc/sudoers.d/infomagic
 # ─────────────────────────────────────
 # Bildmappar
 # ─────────────────────────────────────
-echo "▶ Skapar bildmappar..."
+echo "▶ Kontrollerar bildmappar..."
 mkdir -p "$APP_DIR/public/images/originals" "$APP_DIR/public/images/thumbs"
 chown -R "$APP_USER:$APP_USER" "$APP_DIR/public/images"
 

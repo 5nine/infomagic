@@ -5,8 +5,9 @@ After=network-online.target infomagic-backend.service
 [Service]
 Type=simple
 User=@APP_USER@
+SupplementaryGroups=video render
 Environment=WAYLAND_DISPLAY=wayland-touch
-ExecStart=/usr/bin/weston-launch --config=/home/@APP_USER@/weston-touch.ini --socket=wayland-touch -- /usr/bin/chromium --kiosk --password-store=basic --use-mock-keychain http://localhost:3000/ui/touch.html
+ExecStart=/usr/bin/weston --config=/home/@APP_USER@/weston-touch.ini --socket=wayland-touch -- /usr/bin/chromium --kiosk --password-store=basic --use-mock-keychain http://localhost:3000/ui/touch.html
 Restart=always
 RestartSec=5
 

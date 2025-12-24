@@ -48,6 +48,7 @@ apt install -y \
   nodejs npm \
   chromium \
   weston \
+  seatd \
   cec-utils \
   git \
   rsync
@@ -233,6 +234,13 @@ chmod 440 /etc/sudoers.d/infomagic
 echo "▶ Kontrollerar bildmappar..."
 mkdir -p "$APP_DIR/public/images/originals" "$APP_DIR/public/images/thumbs"
 chown -R "$APP_USER:$APP_USER" "$APP_DIR/public/images"
+
+# ─────────────────────────────────────
+# Aktivera seatd för Weston DRM support
+# ─────────────────────────────────────
+echo "▶ Aktiverar seatd för Weston DRM support..."
+systemctl enable seatd
+systemctl start seatd
 
 # ─────────────────────────────────────
 # Aktivera tjänster

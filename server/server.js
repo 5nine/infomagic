@@ -183,7 +183,6 @@ function broadcastState(state) {
 
 // Broadcast function to send image list updates to all connected clients
 function broadcastImageList(data) {
-  console.log('broadcasting image list', data);
   const message = JSON.stringify(data);
   wss.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {

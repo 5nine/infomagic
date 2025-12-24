@@ -16,11 +16,11 @@ fi
 
 APP_USER="infomagic"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-APP_DIR="/opt/infomagic"
+APP_DIR="$SCRIPT_DIR"
 
 echo "▶ Installerar från källa:"
 echo "   $SCRIPT_DIR"
-echo "▶ Mål:"
+echo "▶ Kör direkt från git-mappen:"
 echo "   $APP_DIR"
 
 # ─────────────────────────────────────
@@ -49,26 +49,12 @@ apt install -y \
   chromium \
   xorg \
   cec-utils \
-  git \
-  rsync
+  git
 
 # ─────────────────────────────────────
 # Installera app
 # ─────────────────────────────────────
-echo "▶ Installerar InfoMagic till $APP_DIR..."
-mkdir -p "$APP_DIR"
-
-# Sync files but preserve user-modified content:
-# - Exclude .git
-# - Exclude config/ (will be handled separately)
-# - Exclude public/images/ (user uploaded images)
-# - Don't use --delete to preserve any extra files
-rsync -a \
-  --exclude='.git' \
-  --exclude='config/' \
-  --exclude='public/images/' \
-  "$SCRIPT_DIR/" "$APP_DIR/"
-
+echo "▶ Konfigurerar InfoMagic i $APP_DIR..."
 # Ensure directories exist
 mkdir -p "$APP_DIR/config"
 mkdir -p "$APP_DIR/public/images/originals" "$APP_DIR/public/images/thumbs"
@@ -228,7 +214,7 @@ systemctl enable infomagic-backend
 # ─────────────────────────────────────
 # Installera startup.sh och desktop shortcut
 # ─────────────────────────────────────
-echo "▶ Installerar startup.sh..."
+echo "▶ Konfigurerar startup.sh..."
 chmod +x "$APP_DIR/startup.sh"
 chown "$APP_USER:$APP_USER" "$APP_DIR/startup.sh"
 

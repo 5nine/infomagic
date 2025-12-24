@@ -45,6 +45,15 @@
 
     <script>
       let ws = null;
+      let slideshowIntervalMs = 5000; // fallback
+      let currentState = { index: 0, playing: true };
+      let lastAdvance = 0;
+
+      /* ───── CONFIG ───── */
+      async function loadConfig() {
+        const cfg = await (await fetch('/api/config')).json();
+        slideshowIntervalMs = (cfg.slideshowInterval || 5) * 1000;
+      }
 
       /* ───── THUMBNAILS ───── */
       async function loadThumbs() {
@@ -83,6 +92,16 @@
         }
       }
 
+      /* ───── SLIDESHOW AUTO-ADVANCE ───── */
+      async function checkAutoAdvance() {
+        const now = Date.now();
+
+        if (currentState.playing && now - lastAdvance >= slideshowIntervalMs) {
+          send('next');
+          lastAdvance = now;
+        }
+      }
+
       /* ───── WEBSOCKET CONNECTION ───── */
       function connectWebSocket() {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -99,6 +118,8 @@
             if (data.type === 'slideshow-state') {
               // Update play/pause icon based on state
               updatePlayPauseIcon(data.state.playing);
+              // Update current state for auto-advance logic
+              currentState = data.state;
             }
           } catch (err) {
             console.error('Error parsing WebSocket message:', err);
@@ -117,11 +138,18 @@
       }
 
       /* ───── INIT ───── */
-      loadThumbs();
-      setInterval(loadThumbs, 60 * 1000);
+      (async () => {
+        await loadConfig();
+        loadThumbs();
+        setInterval(loadThumbs, 60 * 1000);
 
-      // Connect to WebSocket for real-time communication
-      connectWebSocket();
+        // Connect to WebSocket for real-time communication
+        connectWebSocket();
+
+        // Initialize lastAdvance and start auto-advance interval
+        lastAdvance = Date.now();
+        setInterval(checkAutoAdvance, 1000);
+      })();
     </script>
   </body>
 </html>

@@ -29,18 +29,14 @@
 
     <script>
       let images = [];
-      let slideshowIntervalMs = 5000; // fallback
-      let lastAdvance = 0;
       let currentState = { index: 0, playing: true };
       let ws = null;
 
-      async function loadConfig() {
-        const cfg = await (await fetch('/api/config')).json();
-        slideshowIntervalMs = (cfg.slideshowInterval || 5) * 1000;
-      }
       /* ───── BILDER ───── */
       async function loadImages() {
         images = await (await fetch('/api/images')).json();
+        // Update display when images are loaded
+        updateSlideDisplay();
       }
 
       /* ───── WEBSOCKET CONNECTION ───── */
@@ -91,22 +87,6 @@
         );
       }
 
-      /* ───── SLIDESHOW AUTO-ADVANCE ───── */
-      async function checkAutoAdvance() {
-        if (!images.length) return;
-
-        const now = Date.now();
-
-        if (currentState.playing && now - lastAdvance >= slideshowIntervalMs) {
-          await fetch('/api/slideshow', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'next' }),
-          });
-          lastAdvance = now;
-        }
-      }
-
       /* ───── KALENDER ───── */
       async function loadCalendar() {
         const cfg = await (await fetch('/api/config')).json();
@@ -149,15 +129,11 @@
       /* ───── INIT ───── */
       (async () => {
         await loadImages();
-        await loadConfig();
-        updateSlideDisplay();
-        lastAdvance = Date.now();
 
         // Connect to WebSocket for real-time updates
         connectWebSocket();
 
         setInterval(loadImages, 5000);
-        setInterval(checkAutoAdvance, 1000);
 
         loadCalendar();
         loadWeather();

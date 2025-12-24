@@ -51,6 +51,7 @@ async function handleUpload(req, res) {
       fs.renameSync(file.path, target);
 
       await sharp(target)
+        .rotate() // Auto-rotate based on EXIF orientation
         .resize(320, 320, { fit: 'cover', position: 'centre' })
         .toFile(thumb);
 

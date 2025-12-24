@@ -67,7 +67,7 @@ fi
 # ─────────────────────────────────────
 echo "▶ Installerar Node-beroenden (server/)..."
 cd "$APP_DIR/server"
-npm install --frozen-lockfile
+sudo npm install --frozen-lockfile
 cd "$APP_DIR"
 
 # ─────────────────────────────────────

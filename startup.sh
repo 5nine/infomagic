@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-# Allow x server to start and be ready
-sleep 15
-
 # Enable HDMI-1-1 screen
 echo "Configuring displays..."
 xrandr --output HDMI-1-1 --auto --right-of DSI-1

@@ -181,14 +181,31 @@ function broadcastState(state) {
   });
 }
 
-// Set up the broadcast callback in slideshow module
+// Broadcast function to send image list updates to all connected clients
+function broadcastImageList(data) {
+  const message = JSON.stringify(data);
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  });
+}
+
+// Set up the broadcast callbacks
 slideshow.setBroadcastCallback(broadcastState);
+const { setBroadcastCallback: setImageBroadcastCallback } = require('./images');
+setImageBroadcastCallback(broadcastImageList);
 
 // Handle WebSocket connections
 wss.on('connection', ws => {
   // Send current state immediately when client connects
   const currentState = slideshow.getStateSync();
   ws.send(JSON.stringify({ type: 'slideshow-state', state: currentState }));
+
+  // Send current image list immediately when client connects
+  const { listImagesSync } = require('./images');
+  const imageList = listImagesSync();
+  ws.send(JSON.stringify({ type: 'images-updated', images: imageList }));
 
   // Handle incoming messages (if needed in the future)
   ws.on('message', message => {

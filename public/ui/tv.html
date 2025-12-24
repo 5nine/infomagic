@@ -58,6 +58,9 @@
             if (data.type === 'slideshow-state') {
               currentState = data.state;
               updateSlideDisplay();
+            } else if (data.type === 'images-updated') {
+              images = data.images;
+              updateSlideDisplay();
             }
           } catch (err) {
             console.error('Error parsing WebSocket message:', err);
@@ -150,8 +153,6 @@
 
         // Connect to WebSocket for real-time updates
         connectWebSocket();
-
-        setInterval(loadImages, 60 * 1000);
 
         loadCalendar();
         loadWeather();

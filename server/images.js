@@ -13,6 +13,19 @@ fs.mkdirSync(THUMBS, { recursive: true });
 
 const upload = multer({ dest: '/tmp' });
 
+let broadcastCallback = null;
+
+function setBroadcastCallback(callback) {
+  broadcastCallback = callback;
+}
+
+function broadcastImageList() {
+  if (broadcastCallback) {
+    const imageList = listImagesSync();
+    broadcastCallback({ type: 'images-updated', images: imageList });
+  }
+}
+
 async function handleUpload(req, res) {
   const cfg = loadConfig();
   const results = [];
@@ -27,7 +40,7 @@ async function handleUpload(req, res) {
         results.push({
           file: file.originalname,
           ok: false,
-          error: `För låg upplösning (krav ${cfg.minImageLongSide}px)`
+          error: `För låg upplösning (krav ${cfg.minImageLongSide}px)`,
         });
         continue;
       }
@@ -42,24 +55,33 @@ async function handleUpload(req, res) {
         .toFile(thumb);
 
       results.push({ file: file.originalname, ok: true });
-
     } catch (err) {
       results.push({ file: file.originalname, ok: false, error: err.message });
     }
   }
 
+  // Broadcast image list update if any uploads succeeded
+  if (results.some(r => r.ok)) {
+    broadcastImageList();
+  }
+
   res.json(results);
 }
 
+function listImagesSync() {
+  const files = fs
+    .readdirSync(ORIGINALS)
+    .filter(f => !f.startsWith('.'))
+    .sort((a, b) => a.localeCompare(b, 'sv'));
+  return files.map(f => ({
+    id: f,
+    original: `/images/originals/${f}`,
+    thumb: `/images/thumbs/${f}`,
+  }));
+}
+
 function listImages(req, res) {
-  const files = fs.readdirSync(ORIGINALS).filter(f => !f.startsWith('.')).sort((a, b) => a.localeCompare(b, 'sv'));
-  res.json(
-    files.map(f => ({
-      id: f,
-      original: `/images/originals/${f}`,
-      thumb: `/images/thumbs/${f}`
-    }))
-  );
+  res.json(listImagesSync());
 }
 
 function deleteImage(req, res) {
@@ -72,6 +94,9 @@ function deleteImage(req, res) {
     if (fs.existsSync(orig)) fs.unlinkSync(orig);
     if (fs.existsSync(thumb)) fs.unlinkSync(thumb);
 
+    // Broadcast image list update after successful deletion
+    broadcastImageList();
+
     res.json({ ok: true });
   } catch (err) {
     console.error('Delete failed:', err);
@@ -83,5 +108,6 @@ module.exports = {
   upload,
   handleUpload,
   listImages,
-  deleteImage
+  deleteImage,
+  setBroadcastCallback,
 };

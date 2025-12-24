@@ -58,6 +58,10 @@
       /* ───── THUMBNAILS ───── */
       async function loadThumbs() {
         const imgs = await (await fetch('/api/images')).json();
+        updateThumbs(imgs);
+      }
+
+      function updateThumbs(imgs) {
         thumbs.innerHTML = '';
         imgs.forEach((img, idx) => {
           const d = document.createElement('button');
@@ -129,6 +133,9 @@
               updatePlayPauseIcon(data.state.playing);
               // Update current state for auto-advance logic
               currentState = data.state;
+            } else if (data.type === 'images-updated') {
+              // Update thumbnails when image list changes
+              updateThumbs(data.images);
             }
           } catch (err) {
             console.error('Error parsing WebSocket message:', err);
@@ -150,7 +157,6 @@
       (async () => {
         await loadConfig();
         loadThumbs();
-        setInterval(loadThumbs, 60 * 1000);
 
         // Connect to WebSocket for real-time communication
         connectWebSocket();

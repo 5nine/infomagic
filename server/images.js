@@ -108,6 +108,7 @@ module.exports = {
   upload,
   handleUpload,
   listImages,
+  listImagesSync,
   deleteImage,
   setBroadcastCallback,
 };

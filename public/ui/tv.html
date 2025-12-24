@@ -182,13 +182,16 @@
         weatherRows.innerHTML = '';
         data.forEach(d => {
           const iconSvg = getWeatherIcon(d.symbol);
+          // Format date from YYYY-MM-DD to DD/MM
+          const dateParts = d.date.slice(5).split('-');
+          const formattedDate = `${dateParts[1]}/${dateParts[0]}`;
           weatherRows.innerHTML += `
       <div class="weather-day">
         <div class="weather-left">
           <svg class="weather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             ${iconSvg}
           </svg>
-          ${d.date.slice(5)}
+          ${formattedDate}
         </div>
         <div class="weather-mid">Vind ${Math.round(d.wind)} m/s</div>
         <div class="weather-right">

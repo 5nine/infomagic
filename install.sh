@@ -50,7 +50,9 @@ apt install -y \
   xorg \
   cec-utils \
   git \
-  rsync
+  rsync \
+  xinput-calibrator \
+  xinput
 
 # ─────────────────────────────────────
 # Installera app
@@ -231,6 +233,13 @@ systemctl enable infomagic-backend
 echo "▶ Installerar startup.sh..."
 chmod +x "$APP_DIR/startup.sh"
 chown "$APP_USER:$APP_USER" "$APP_DIR/startup.sh"
+
+# Make calibration script executable if it exists
+if [ -f "$APP_DIR/calibrate-touch.sh" ]; then
+  echo "▶ Installerar calibrate-touch.sh..."
+  chmod +x "$APP_DIR/calibrate-touch.sh"
+  chown "$APP_USER:$APP_USER" "$APP_DIR/calibrate-touch.sh"
+fi
 
 echo
 echo "====================================="

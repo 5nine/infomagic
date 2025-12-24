@@ -14,21 +14,23 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
-APP_USER="pi"
+APP_USER="infomagic"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-APP_DIR="$SCRIPT_DIR"
+APP_DIR="/opt/infomagic"
 
 echo "▶ Installerar från källa:"
 echo "   $SCRIPT_DIR"
-echo "▶ Kör direkt från git-mappen:"
+echo "▶ Mål:"
 echo "   $APP_DIR"
 
 # ─────────────────────────────────────
-# Kontrollera att pi-användaren finns
+# Skapa användare
 # ─────────────────────────────────────
 if ! id "$APP_USER" &>/dev/null; then
-  echo "❌ Användaren '$APP_USER' finns inte"
-  exit 1
+  echo "▶ Skapar användare '$APP_USER'..."
+  useradd -m -s /bin/bash "$APP_USER"
+else
+  echo "▶ Användare '$APP_USER' finns redan"
 fi
 
 # Add user to groups needed for DRM access
@@ -47,15 +49,31 @@ apt install -y \
   chromium \
   xorg \
   cec-utils \
-  git
+  git \
+  rsync
 
 # ─────────────────────────────────────
 # Installera app
 # ─────────────────────────────────────
-echo "▶ Konfigurerar InfoMagic i $APP_DIR..."
+echo "▶ Installerar InfoMagic till $APP_DIR..."
+mkdir -p "$APP_DIR"
+
+# Sync files but preserve user-modified content:
+# - Exclude .git
+# - Exclude config/ (will be handled separately)
+# - Exclude public/images/ (user uploaded images)
+# - Don't use --delete to preserve any extra files
+rsync -a \
+  --exclude='.git' \
+  --exclude='config/' \
+  --exclude='public/images/' \
+  "$SCRIPT_DIR/" "$APP_DIR/"
+
 # Ensure directories exist
 mkdir -p "$APP_DIR/config"
 mkdir -p "$APP_DIR/public/images/originals" "$APP_DIR/public/images/thumbs"
+
+chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 
 if [ ! -f "$APP_DIR/server/package.json" ]; then
   echo "❌ package.json hittades inte i $APP_DIR/server"
@@ -66,9 +84,10 @@ fi
 # Node dependencies
 # ─────────────────────────────────────
 echo "▶ Installerar Node-beroenden (server/)..."
+sudo -u "$APP_USER" bash <<EOF
 cd "$APP_DIR/server"
-sudo npm install --frozen-lockfile
-cd "$APP_DIR"
+npm install
+EOF
 
 # ─────────────────────────────────────
 # Skapa lösenord
@@ -97,7 +116,9 @@ fi
 if [ ! -f "$APP_DIR/config/users.json" ]; then
   echo "▶ Skapar config/users.json..."
   
-  ADMIN_PASS="$ADMIN_PASS" EDITOR_PASS="$EDITOR_PASS" \
+  sudo -u "$APP_USER" \
+    ADMIN_PASS="$ADMIN_PASS" \
+    EDITOR_PASS="$EDITOR_PASS" \
     bash <<EOF
 cd "$APP_DIR/server"
 node <<'NODEEOF'
@@ -135,7 +156,7 @@ unset EDITOR_PASS
 if [ ! -f "$APP_DIR/config/config.json" ]; then
   echo "▶ Skapar config/config.json..."
   
-  bash <<EOF
+  sudo -u "$APP_USER" bash <<EOF
 cd "$APP_DIR/server"
 node <<'NODEEOF'
 const fs = require('fs');
@@ -195,6 +216,49 @@ chmod 440 /etc/sudoers.d/infomagic
 # ─────────────────────────────────────
 echo "▶ Kontrollerar bildmappar..."
 mkdir -p "$APP_DIR/public/images/originals" "$APP_DIR/public/images/thumbs"
+chown -R "$APP_USER:$APP_USER" "$APP_DIR/public/images"
+
+# ─────────────────────────────────────
+# Konfigurera auto-login för infomagic användare
+# ─────────────────────────────────────
+echo "▶ Konfigurerar auto-login för '$APP_USER'..."
+
+# Configure LightDM for desktop auto-login (Bookworm)
+if [ -f /etc/lightdm/lightdm.conf ]; then
+    # Backup original config
+    if [ ! -f /etc/lightdm/lightdm.conf.bak ]; then
+        cp /etc/lightdm/lightdm.conf /etc/lightdm/lightdm.conf.bak
+    fi
+    
+    # Update or add autologin-user setting
+    if grep -q "^autologin-user=" /etc/lightdm/lightdm.conf; then
+        sed -i "s/^autologin-user=.*/autologin-user=$APP_USER/" /etc/lightdm/lightdm.conf
+    else
+        # Add to [Seat:*] section
+        if grep -q "^\[Seat:\*\]" /etc/lightdm/lightdm.conf; then
+            sed -i "/^\[Seat:\*\]/a autologin-user=$APP_USER" /etc/lightdm/lightdm.conf
+        else
+            echo "" >> /etc/lightdm/lightdm.conf
+            echo "[Seat:*]" >> /etc/lightdm/lightdm.conf
+            echo "autologin-user=$APP_USER" >> /etc/lightdm/lightdm.conf
+        fi
+    fi
+    
+    # Ensure autologin-user-timeout is set (0 = no delay)
+    if grep -q "^autologin-user-timeout=" /etc/lightdm/lightdm.conf; then
+        sed -i "s/^autologin-user-timeout=.*/autologin-user-timeout=0/" /etc/lightdm/lightdm.conf
+    else
+        sed -i "/^autologin-user=$APP_USER/a autologin-user-timeout=0" /etc/lightdm/lightdm.conf
+    fi
+fi
+
+# Configure console auto-login (systemd)
+mkdir -p /etc/systemd/system/getty@tty1.service.d
+cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf <<EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin $APP_USER --noclear %I \$TERM
+EOF
 
 # ─────────────────────────────────────
 # Aktivera tjänster
@@ -202,6 +266,36 @@ mkdir -p "$APP_DIR/public/images/originals" "$APP_DIR/public/images/thumbs"
 echo "▶ Aktiverar systemd-tjänster..."
 systemctl daemon-reload
 systemctl enable infomagic-backend
+
+# ─────────────────────────────────────
+# Installera startup.sh och desktop shortcut
+# ─────────────────────────────────────
+echo "▶ Installerar startup.sh..."
+chmod +x "$APP_DIR/startup.sh"
+chown "$APP_USER:$APP_USER" "$APP_DIR/startup.sh"
+
+echo "▶ Skapar desktop shortcut..."
+DESKTOP_DIR="/home/$APP_USER/Desktop"
+APPLICATIONS_DIR="/home/$APP_USER/.local/share/applications"
+mkdir -p "$DESKTOP_DIR" "$APPLICATIONS_DIR"
+
+cat > "$DESKTOP_DIR/InfoMagic-Startup.desktop" <<EOF
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=InfoMagic Startup
+Comment=Start InfoMagic displays
+Exec=$APP_DIR/startup.sh
+Icon=application-x-executable
+Terminal=true
+Categories=Utility;
+EOF
+
+chmod +x "$DESKTOP_DIR/InfoMagic-Startup.desktop"
+chown "$APP_USER:$APP_USER" "$DESKTOP_DIR/InfoMagic-Startup.desktop"
+
+cp "$DESKTOP_DIR/InfoMagic-Startup.desktop" "$APPLICATIONS_DIR/"
+chown "$APP_USER:$APP_USER" "$APPLICATIONS_DIR/InfoMagic-Startup.desktop"
 
 echo
 echo "====================================="

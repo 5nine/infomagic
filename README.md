@@ -4,6 +4,7 @@ InfoMagic är ett informations- och bildspelsystem för **Raspberry Pi 5**,
 avsett för publika installationer med **en TV-skärm och en touchskärm**.
 
 Systemet är byggt för att:
+
 - starta automatiskt
 - köras obemannat över lång tid
 - fungera utan inloggning
@@ -58,7 +59,6 @@ Installationsscriptet automatiserar:
 - skapande av katalogstruktur under `/opt/infomagic`
 - konfiguration av systemd-tjänster:
   - `infomagic-backend`
-  - `weston`
   - `infomagic-tv`
   - `infomagic-touch`
 - konfiguration av `sudoers` för:
@@ -75,14 +75,21 @@ Vissa delar kräver manuell verifiering eller bör inte automatiseras.
 
 ---
 
-## Konfiguration (config/config.json)
+## Konfiguration
 
-InfoMagic använder filen `config/config.json` som central konfiguration.
+InfoMagic använder följande konfigurationsfiler:
 
-Filen läses av backend vid start och påverkar:
+### config/config.json
+
+Central konfiguration som läses av backend vid start och påverkar:
+
 - bilduppladdning
 - bildspel
 - kalender-visning
+
+### config/users.json
+
+Användardata med lösenordshashar för admin och editor. Skapas automatiskt vid första installation.
 
 ---
 
@@ -98,6 +105,7 @@ echo "standby 0" | cec-client -s -d 1
 ```
 
 Om detta inte fungerar:
+
 - kontrollera att HDMI-CEC är aktiverat i TV:ns inställningar
 - prova annan HDMI-port
 
@@ -117,6 +125,7 @@ weston-info | grep Output
 ```
 
 Om ordningen skiljer sig:
+
 - justera `WAYLAND_DISPLAY` i:
   - `/etc/systemd/system/infomagic-tv.service`
   - `/etc/systemd/system/infomagic-touch.service`
@@ -149,45 +158,17 @@ Efter omstart:
 
 ```bash
 systemctl status infomagic-backend
-systemctl status weston
 systemctl status infomagic-tv
 systemctl status infomagic-touch
 ```
 
 Kontrollera att:
+
 - TV startar automatiskt
 - Touchskärmen är aktiv
 - Touch styr bildspelet på TV
 - Nya bilder dyker upp utan omladdning
 - Systemet återhämtar sig efter reboot
-
----
-
-## Projektstruktur
-
-```
-infomagic/
-├── install.sh
-├── README.md
-├── server/
-│   ├── server.js
-│   ├── slideshow.js
-│   ├── images.js
-│   ├── weather.js
-│   └── config.js
-├── public/
-│   ├── ui/
-│   │   ├── tv.html
-│   │   ├── touch.html
-│   │   ├── admin.html
-│   │   └── editor.html
-│   ├── assets/
-│   │   └── sj_logo.png
-│   └── images/
-│       ├── originals/
-│       └── thumbs/
-└── package.json
-```
 
 ---
 
@@ -205,6 +186,7 @@ infomagic/
 ## Driftfilosofi
 
 Systemet är byggt för:
+
 - obemannad drift
 - hög stabilitet
 - minimal administration

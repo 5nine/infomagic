@@ -224,14 +224,38 @@ chown -R "$APP_USER:$APP_USER" "$APP_DIR/public/images"
 echo "▶ Aktiverar systemd-tjänster..."
 systemctl daemon-reload
 systemctl enable infomagic-backend
-systemctl enable infomagic-startup
 
 # ─────────────────────────────────────
-# Installera startup.sh
+# Installera startup.sh och desktop shortcut
 # ─────────────────────────────────────
 echo "▶ Installerar startup.sh..."
 chmod +x "$APP_DIR/startup.sh"
 chown "$APP_USER:$APP_USER" "$APP_DIR/startup.sh"
+
+echo "▶ Skapar desktop shortcut..."
+# Create desktop shortcut in user's Desktop and applications directory
+DESKTOP_DIR="/home/$APP_USER/Desktop"
+APPLICATIONS_DIR="/home/$APP_USER/.local/share/applications"
+mkdir -p "$DESKTOP_DIR" "$APPLICATIONS_DIR"
+
+cat > "$DESKTOP_DIR/InfoMagic-Startup.desktop" <<EOF
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=InfoMagic Startup
+Comment=Start InfoMagic displays
+Exec=$APP_DIR/startup.sh
+Icon=application-x-executable
+Terminal=true
+Categories=Utility;
+EOF
+
+chmod +x "$DESKTOP_DIR/InfoMagic-Startup.desktop"
+chown "$APP_USER:$APP_USER" "$DESKTOP_DIR/InfoMagic-Startup.desktop"
+
+# Also create in applications directory for menu access
+cp "$DESKTOP_DIR/InfoMagic-Startup.desktop" "$APPLICATIONS_DIR/InfoMagic-Startup.desktop"
+chown "$APP_USER:$APP_USER" "$APPLICATIONS_DIR/InfoMagic-Startup.desktop"
 
 echo
 echo "====================================="

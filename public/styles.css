@@ -404,6 +404,7 @@ body.touch-page {
   align-items: center;
   font-size: 32px;
   user-select: none;
+  cursor: pointer;
 }
 
 .admin-container {

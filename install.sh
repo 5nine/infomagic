@@ -59,8 +59,6 @@ echo "▶ Konfigurerar InfoMagic i $APP_DIR..."
 mkdir -p "$APP_DIR/config"
 mkdir -p "$APP_DIR/public/images/originals" "$APP_DIR/public/images/thumbs"
 
-chown -R "$APP_USER:$APP_USER" "$APP_DIR"
-
 if [ ! -f "$APP_DIR/server/package.json" ]; then
   echo "❌ package.json hittades inte i $APP_DIR/server"
   exit 1
@@ -201,7 +199,6 @@ chmod 440 /etc/sudoers.d/infomagic
 # ─────────────────────────────────────
 echo "▶ Kontrollerar bildmappar..."
 mkdir -p "$APP_DIR/public/images/originals" "$APP_DIR/public/images/thumbs"
-chown -R "$APP_USER:$APP_USER" "$APP_DIR/public/images"
 
 # ─────────────────────────────────────
 # Aktivera tjänster
@@ -209,36 +206,6 @@ chown -R "$APP_USER:$APP_USER" "$APP_DIR/public/images"
 echo "▶ Aktiverar systemd-tjänster..."
 systemctl daemon-reload
 systemctl enable infomagic-backend
-
-# ─────────────────────────────────────
-# Installera startup.sh och desktop shortcut
-# ─────────────────────────────────────
-echo "▶ Konfigurerar startup.sh..."
-chmod +x "$APP_DIR/startup.sh"
-chown "$APP_USER:$APP_USER" "$APP_DIR/startup.sh"
-
-echo "▶ Skapar desktop shortcut..."
-DESKTOP_DIR="/home/pi/Desktop"
-APPLICATIONS_DIR="/home/pi/.local/share/applications"
-mkdir -p "$DESKTOP_DIR" "$APPLICATIONS_DIR"
-
-cat > "$DESKTOP_DIR/InfoMagic-Startup.desktop" <<EOF
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=InfoMagic Startup
-Comment=Start InfoMagic displays
-Exec=$APP_DIR/startup.sh
-Icon=application-x-executable
-Terminal=true
-Categories=Utility;
-EOF
-
-chmod +x "$DESKTOP_DIR/InfoMagic-Startup.desktop"
-chown pi:pi "$DESKTOP_DIR/InfoMagic-Startup.desktop"
-
-cp "$DESKTOP_DIR/InfoMagic-Startup.desktop" "$APPLICATIONS_DIR/"
-chown pi:pi "$APPLICATIONS_DIR/InfoMagic-Startup.desktop"
 
 echo
 echo "====================================="

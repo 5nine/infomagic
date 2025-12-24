@@ -196,6 +196,26 @@ for service_file in "$SCRIPT_DIR/systemd"/*.service; do
 done
 
 # ─────────────────────────────────────
+# Weston-konfigurationer
+# ─────────────────────────────────────
+echo "▶ Skapar Weston-konfigurationer..."
+HOME_DIR=$(getent passwd "$APP_USER" | cut -d: -f6)
+if [ -n "$HOME_DIR" ]; then
+  if [ -f "$SCRIPT_DIR/weston-tv.ini" ]; then
+    cp "$SCRIPT_DIR/weston-tv.ini" "$HOME_DIR/weston-tv.ini"
+    chown "$APP_USER:$APP_USER" "$HOME_DIR/weston-tv.ini"
+    echo "  → Skapade $HOME_DIR/weston-tv.ini"
+  fi
+  if [ -f "$SCRIPT_DIR/weston-touch.ini" ]; then
+    cp "$SCRIPT_DIR/weston-touch.ini" "$HOME_DIR/weston-touch.ini"
+    chown "$APP_USER:$APP_USER" "$HOME_DIR/weston-touch.ini"
+    echo "  → Skapade $HOME_DIR/weston-touch.ini"
+  fi
+else
+  echo "  ⚠️ Kunde inte hitta hemkatalog för $APP_USER"
+fi
+
+# ─────────────────────────────────────
 # sudoers
 # ─────────────────────────────────────
 echo "▶ Konfigurerar sudoers..."
@@ -217,7 +237,6 @@ chown -R "$APP_USER:$APP_USER" "$APP_DIR/public/images"
 # ─────────────────────────────────────
 echo "▶ Aktiverar systemd-tjänster..."
 systemctl daemon-reload
-systemctl enable infomagic-x
 systemctl enable infomagic-backend
 systemctl enable infomagic-tv
 systemctl enable infomagic-touch

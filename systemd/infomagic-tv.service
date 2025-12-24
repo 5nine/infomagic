@@ -1,21 +1,12 @@
 [Unit]
 Description=InfoMagic TV Display
-After=network-online.target infomagic-backend.service infomagic-x.service
-Requires=infomagic-x.service
+After=network-online.target infomagic-backend.service
 
 [Service]
 Type=simple
 User=@APP_USER@
-Environment=DISPLAY=:0
-ExecStart=/usr/bin/chromium \
-  --password-store=basic \
-  --use-mock-keychain \
-  --user-data-dir=/home/pi/.config/chromium-tv
-  --kiosk \
-  --window-position=0,0 \
-  --noerrdialogs \
-  --disable-session-crashed-bubble \
-  http://localhost:3000/ui/tv.html
+Environment=WAYLAND_DISPLAY=wayland-tv
+ExecStart=/usr/bin/weston --config /home/@APP_USER@/weston-tv.ini --socket=wayland-tv -- /usr/bin/chromium --kiosk --password-store=basic --use-mock-keychain http://localhost:3000/ui/tv.html
 Restart=always
 RestartSec=5
 

@@ -1,20 +1,12 @@
 [Unit]
 Description=InfoMagic Touch Display
-After=network-online.target infomagic-backend.service infomagic-x.service
-Requires=infomagic-x.service
+After=network-online.target infomagic-backend.service
 
 [Service]
 Type=simple
 User=@APP_USER@
-Environment=DISPLAY=:1
-ExecStart=/usr/bin/chromium \
-  --password-store=basic \
-  --use-mock-keychain \
-  --user-data-dir=/home/pi/.config/chromium-tv
-  --kiosk \
-  --noerrdialogs \
-  --disable-session-crashed-bubble \
-  http://localhost:3000/ui/touch.html
+Environment=WAYLAND_DISPLAY=wayland-touch
+ExecStart=/usr/bin/weston --config /home/@APP_USER@/weston-touch.ini --socket=wayland-touch -- /usr/bin/chromium --kiosk --password-store=basic --use-mock-keychain http://localhost:3000/ui/touch.html
 Restart=always
 RestartSec=5
 

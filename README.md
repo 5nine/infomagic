@@ -134,21 +134,29 @@ Om ordningen skiljer sig:
 
 ### Schemaläggning (cron)
 
-Schemaläggning installeras **inte automatiskt** för att undvika
-att skriva över befintlig crontab.
+Schemaläggning installeras **automatiskt** av `install.sh` med standardtider:
+- **På**: 06:00 (TV och touchskärm tänds)
+- **Av**: 18:00 (TV och touchskärm släcks)
 
-Lägg till manuellt:
+Befintliga cron jobs bevaras och uppdateras inte.
+
+För att ändra tiderna, sätt miljövariabler innan installation:
 
 ```bash
-crontab -e
+export INFOMAGIC_ON_HOUR=7
+export INFOMAGIC_ON_MINUTE=30
+export INFOMAGIC_OFF_HOUR=20
+export INFOMAGIC_OFF_MINUTE=0
+sudo bash install.sh
 ```
 
-Exempel (06:00–18:00):
+Eller redigera manuellt efter installation:
 
-```cron
-0 6 * * * echo "on 0" | cec-client -s -d 1 && echo 1 | tee /sys/class/backlight/*/bl_power
-0 18 * * * echo "standby 0" | cec-client -s -d 1 && echo 0 | tee /sys/class/backlight/*/bl_power
+```bash
+sudo crontab -e
 ```
+
+InfoMagic-cron jobs identifieras med kommentaren `# InfoMagic scheduled on/off`.
 
 ---
 

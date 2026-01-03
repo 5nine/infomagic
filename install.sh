@@ -294,6 +294,59 @@ EOF
   fi
 fi
 
+# ─────────────────────────────────────
+# Cron jobs för schemaläggning
+# ─────────────────────────────────────
+echo "▶ Konfigurerar cron jobs för schemaläggning..."
+
+# Default times (06:00 and 18:00)
+ON_HOUR="${INFOMAGIC_ON_HOUR:-6}"
+ON_MINUTE="${INFOMAGIC_ON_MINUTE:-0}"
+OFF_HOUR="${INFOMAGIC_OFF_HOUR:-18}"
+OFF_MINUTE="${INFOMAGIC_OFF_MINUTE:-0}"
+
+# Marker to identify InfoMagic cron jobs
+CRON_MARKER="# InfoMagic scheduled on/off"
+
+# Create temporary file for new crontab
+TMP_CRON=$(mktemp)
+trap "rm -f $TMP_CRON" EXIT
+
+# Get current crontab
+crontab -l > "$TMP_CRON" 2>/dev/null || true
+
+# Check if InfoMagic cron jobs already exist
+if grep -q "$CRON_MARKER" "$TMP_CRON" 2>/dev/null; then
+  echo "  → InfoMagic cron jobs finns redan - uppdaterar..."
+  # Remove existing InfoMagic entries (marker and the two cron lines that follow)
+  # Use awk to skip lines from marker until we hit a non-cron line or blank line
+  awk -v marker="$CRON_MARKER" '
+    BEGIN { skip=0; skip_count=0 }
+    $0 ~ marker { skip=1; skip_count=2; next }
+    skip && skip_count > 0 && /^[0-9*]+\s+[0-9*]+\s+/ { skip_count--; next }
+    skip { skip=0; skip_count=0 }
+    { print }
+  ' "$TMP_CRON" > "${TMP_CRON}.new" && mv "${TMP_CRON}.new" "$TMP_CRON"
+else
+  echo "  → Lägger till InfoMagic cron jobs..."
+  # Add blank line if crontab is not empty and doesn't end with newline
+  if [ -s "$TMP_CRON" ] && [ "$(tail -c 1 "$TMP_CRON")" != "" ]; then
+    echo "" >> "$TMP_CRON"
+  fi
+fi
+
+# Add InfoMagic cron jobs
+# Note: bl_power 0 = backlight ON, bl_power 1 = backlight OFF
+cat >> "$TMP_CRON" <<EOF
+$CRON_MARKER
+$ON_MINUTE $ON_HOUR * * * echo "on 0" | cec-client -s -d 1 && echo 0 | tee /sys/class/backlight/*/bl_power >/dev/null 2>&1
+$OFF_MINUTE $OFF_HOUR * * * echo "standby 0" | cec-client -s -d 1 && echo 1 | tee /sys/class/backlight/*/bl_power >/dev/null 2>&1
+EOF
+
+# Install new crontab
+crontab "$TMP_CRON"
+echo "  → Cron jobs installerade (på: ${ON_HOUR}:$(printf %02d ${ON_MINUTE}), av: ${OFF_HOUR}:$(printf %02d ${OFF_MINUTE}))"
+
 echo
 echo "====================================="
 echo "✅ Installation klar"

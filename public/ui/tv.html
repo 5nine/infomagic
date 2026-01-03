@@ -209,48 +209,52 @@
 
       /* ───── VÄDER ───── */
       function getWeatherIcon(symbol) {
-        // SMHI weather symbol codes (Wsymb2) mapped to simple Unicode symbols
+        // SMHI weather symbol codes (Wsymb2) mapped to SVG icons
         const icons = {
           // Clear/Sunny
-          1: '☀',  // Sun (U+2600)
-          2: '☀',  // Sun
-          3: '⛅',  // Sun behind cloud (U+26C5)
-          4: '⛅',  // Sun behind cloud
+          1: '<circle cx="12" cy="12" r="4" fill="currentColor"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+          // Nearly clear / Partly cloudy
+          2: '<circle cx="12" cy="12" r="4" fill="currentColor" opacity="0.9"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M18 15a3 3 0 11-6 0 3 3 0 016 0z" fill="currentColor" opacity="0.7"/>',
+          // Variable cloudiness
+          3: '<circle cx="12" cy="12" r="4" fill="currentColor" opacity="0.8"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M16.5 14.25a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" fill="currentColor" opacity="0.6"/><path d="M19.5 15.75a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" fill="currentColor" opacity="0.5"/>',
+          // Halfclear
+          4: '<circle cx="12" cy="12" r="4" fill="currentColor" opacity="0.9"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M18 15a3 3 0 11-6 0 3 3 0 016 0z" fill="currentColor" opacity="0.7"/>',
           // Cloudy
-          5: '☁',  // Cloud (U+2601)
-          6: '☁',  // Cloud (overcast)
+          5: '<path d="M18 15a3 3 0 11-6 0 3 3 0 016 0z" fill="currentColor"/><path d="M16.5 14.25a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" fill="currentColor" opacity="0.6"/><path d="M19.5 15.75a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" fill="currentColor" opacity="0.5"/>',
+          // Overcast
+          6: '<path d="M18 15a3 3 0 11-6 0 3 3 0 016 0z" fill="currentColor"/><path d="M16.5 14.25a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" fill="currentColor" opacity="0.8"/><path d="M19.5 15.75a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" fill="currentColor" opacity="0.7"/><path d="M4.5 15.75a2.25 2.25 0 114.5 0 2.25 2.25 0 01-4.5 0z" fill="currentColor" opacity="0.6"/>',
           // Fog
-          7: '≡',   // Fog (simple symbol)
+          7: '<rect x="4" y="10" width="16" height="2.5" rx="1" fill="currentColor" opacity="0.7"/><rect x="4" y="13" width="16" height="2.5" rx="1" fill="currentColor" opacity="0.7"/><rect x="4" y="16" width="12" height="2.5" rx="1" fill="currentColor" opacity="0.7"/>',
           // Rain showers
-          8: '☂',   // Umbrella (U+2602)
-          9: '☂',   // Umbrella
-          10: '☂',  // Umbrella
+          8: '<path d="M18 15a3 3 0 11-6 0 3 3 0 016 0z" fill="currentColor" opacity="0.6"/><line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10.5" y1="19.5" x2="10.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="19.5" x2="13.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+          9: '<path d="M18 15a3 3 0 11-6 0 3 3 0 016 0z" fill="currentColor" opacity="0.6"/><line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10.5" y1="19.5" x2="10.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="19.5" x2="13.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="20.25" x2="9" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="20.25" x2="15" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+          10: '<path d="M18 15a3 3 0 11-6 0 3 3 0 016 0z" fill="currentColor" opacity="0.6"/><line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10.5" y1="19.5" x2="10.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="19.5" x2="13.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="20.25" x2="9" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="20.25" x2="15" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="7.5" y1="21" x2="7.5" y2="23.25" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="16.5" y1="21" x2="16.5" y2="23.25" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
           // Thunderstorm
-          11: '⚡',  // Lightning (U+26A1)
+          11: '<path d="M18 15a3 3 0 11-6 0 3 3 0 016 0z" fill="currentColor" opacity="0.6"/><line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10.5" y1="19.5" x2="10.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="19.5" x2="13.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M11 18l2 2-1 1 2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
           // Sleet showers
-          12: '☃',  // Snowman (U+2603)
-          13: '☃',  // Snowman
+          12: '<path d="M18 15a3 3 0 11-6 0 3 3 0 016 0z" fill="currentColor" opacity="0.6"/><line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10.5" y1="19.5" x2="10.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="19.5" x2="13.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="10.5" cy="20.5" r="1.2" fill="currentColor"/><circle cx="13.5" cy="20.5" r="1.2" fill="currentColor"/>',
+          13: '<path d="M18 15a3 3 0 11-6 0 3 3 0 016 0z" fill="currentColor" opacity="0.6"/><line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10.5" y1="19.5" x2="10.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="19.5" x2="13.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="20.25" x2="9" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="20.25" x2="15" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="21" r="1.2" fill="currentColor"/><circle cx="15" cy="21" r="1.2" fill="currentColor"/>',
           // Snow showers
-          14: '❄',  // Snowflake (U+2744)
-          15: '❄',   // Snowflake
+          14: '<path d="M18 15a3 3 0 11-6 0 3 3 0 016 0z" fill="currentColor" opacity="0.6"/><line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10.5" y1="19.5" x2="13.5" y2="19.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="19.5" x2="12" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9.5" y1="20.5" x2="12.5" y2="17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="20.5" x2="10.5" y2="17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+          15: '<path d="M18 15a3 3 0 11-6 0 3 3 0 016 0z" fill="currentColor" opacity="0.6"/><line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10.5" y1="19.5" x2="13.5" y2="19.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="19.5" x2="12" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9.5" y1="20.5" x2="12.5" y2="17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="20.5" x2="10.5" y2="17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8.5" y1="21.5" x2="11.5" y2="21.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8.5" y1="21.5" x2="8.5" y2="24.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15.5" y1="21.5" x2="18.5" y2="21.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15.5" y1="21.5" x2="15.5" y2="24.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
           // Rain
-          16: '☂',  // Umbrella
-          17: '☂',  // Umbrella
-          18: '☂',  // Umbrella
+          16: '<line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10.5" y1="19.5" x2="10.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="19.5" x2="13.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+          17: '<line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10.5" y1="19.5" x2="10.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="19.5" x2="13.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="20.25" x2="9" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="20.25" x2="15" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+          18: '<line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10.5" y1="19.5" x2="10.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="19.5" x2="13.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="20.25" x2="9" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="20.25" x2="15" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="7.5" y1="21" x2="7.5" y2="23.25" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="16.5" y1="21" x2="16.5" y2="23.25" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
           // Thunder
-          19: '⚡',  // Lightning
+          19: '<line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10.5" y1="19.5" x2="10.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="19.5" x2="13.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M11 18l2 2-1 1 2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
           // Sleet
-          20: '☃',  // Snowman
-          21: '☃',  // Snowman
+          20: '<line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10.5" y1="19.5" x2="10.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="19.5" x2="13.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="10.5" cy="20.5" r="1.2" fill="currentColor"/><circle cx="13.5" cy="20.5" r="1.2" fill="currentColor"/>',
+          21: '<line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10.5" y1="19.5" x2="10.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="19.5" x2="13.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="20.25" x2="9" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="20.25" x2="15" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="21" r="1.2" fill="currentColor"/><circle cx="15" cy="21" r="1.2" fill="currentColor"/>',
           // Snowfall
-          22: '❄',  // Snowflake
-          23: '❄',  // Snowflake
-          24: '❄',  // Snowflake
+          22: '<line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10.5" y1="19.5" x2="13.5" y2="19.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="19.5" x2="12" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9.5" y1="20.5" x2="12.5" y2="17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="20.5" x2="10.5" y2="17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+          23: '<line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10.5" y1="19.5" x2="13.5" y2="19.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="19.5" x2="12" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9.5" y1="20.5" x2="12.5" y2="17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="20.5" x2="10.5" y2="17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8.5" y1="21.5" x2="11.5" y2="21.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8.5" y1="21.5" x2="8.5" y2="24.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15.5" y1="21.5" x2="18.5" y2="21.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15.5" y1="21.5" x2="15.5" y2="24.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+          24: '<line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10.5" y1="19.5" x2="13.5" y2="19.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="19.5" x2="12" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9.5" y1="20.5" x2="12.5" y2="17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="20.5" x2="10.5" y2="17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8.5" y1="21.5" x2="11.5" y2="21.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8.5" y1="21.5" x2="8.5" y2="24.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15.5" y1="21.5" x2="18.5" y2="21.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15.5" y1="21.5" x2="15.5" y2="24.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="6.5" y1="22.5" x2="9.5" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="6.5" y1="22.5" x2="6.5" y2="25.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="17.5" y1="22.5" x2="20.5" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="17.5" y1="22.5" x2="17.5" y2="25.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
           // Rain showers and thunder
-          25: '⚡',  // Lightning
+          25: '<path d="M18 15a3 3 0 11-6 0 3 3 0 016 0z" fill="currentColor" opacity="0.6"/><line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10.5" y1="19.5" x2="10.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="19.5" x2="13.5" y2="21.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M11 18l2 2-1 1 2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
           // Snow showers and thunder
-          26: '⚡',  // Lightning
-          27: '⚡',  // Lightning
+          26: '<path d="M18 15a3 3 0 11-6 0 3 3 0 016 0z" fill="currentColor" opacity="0.6"/><line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10.5" y1="19.5" x2="13.5" y2="19.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="19.5" x2="12" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9.5" y1="20.5" x2="12.5" y2="17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="20.5" x2="10.5" y2="17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M11 18l2 2-1 1 2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
+          27: '<path d="M18 15a3 3 0 11-6 0 3 3 0 016 0z" fill="currentColor" opacity="0.6"/><line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10.5" y1="19.5" x2="13.5" y2="19.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="19.5" x2="12" y2="22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9.5" y1="20.5" x2="12.5" y2="17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="20.5" x2="10.5" y2="17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8.5" y1="21.5" x2="11.5" y2="21.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8.5" y1="21.5" x2="8.5" y2="24.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15.5" y1="21.5" x2="18.5" y2="21.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15.5" y1="21.5" x2="15.5" y2="24.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M11 18l2 2-1 1 2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
         };
 
         // Default to cloudy if symbol not found
@@ -265,7 +269,7 @@
         const monthNames = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
         
         data.forEach((d, index) => {
-          const iconEmoji = getWeatherIcon(d.symbol);
+          const iconSvg = getWeatherIcon(d.symbol);
           // Format date from YYYY-MM-DD to Scandinavian format (Sön 4 jan)
           const dateParts = d.date.split('-');
           const year = dateParts[0];
@@ -285,7 +289,9 @@
           weatherRows.innerHTML += `
       <div class="weather-day">
         <div class="weather-left">
-          <span class="weather-icon">${iconEmoji}</span>
+          <svg class="weather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            ${iconSvg}
+          </svg>
           <div class="weather-date-info">
             <div class="weather-date">${dateLabel}</div>
             ${d.precip ? '<div class="weather-precip">Nederbörd</div>' : ''}

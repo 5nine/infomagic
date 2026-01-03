@@ -246,7 +246,14 @@ fi
 # ─────────────────────────────────────
 echo "▶ Installerar LXsession autostart..."
 LXSESSION_AUTOSTART_DIR="/etc/xdg/lxsession/LXDE-pi/autostart"
-mkdir -p "$LXSESSION_AUTOSTART_DIR"
+# Create directory if it doesn't exist
+if [ ! -d "$LXSESSION_AUTOSTART_DIR" ]; then
+  if [ -e "$LXSESSION_AUTOSTART_DIR" ]; then
+    echo "  ⚠ $LXSESSION_AUTOSTART_DIR finns redan som fil, hoppar över..."
+  else
+    mkdir -p "$LXSESSION_AUTOSTART_DIR"
+  fi
+fi
 
 # Install autostart entry from repo
 if [ -f "$SCRIPT_DIR/lxsession/infomagic-startup.desktop" ]; then

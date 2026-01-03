@@ -209,48 +209,48 @@
 
       /* ───── VÄDER ───── */
       function getWeatherIcon(symbol) {
-        // SMHI weather symbol codes (Wsymb2) mapped to weather emoji
+        // SMHI weather symbol codes (Wsymb2) mapped to simple Unicode symbols
         const icons = {
           // Clear/Sunny
-          1: '☀️',  // Sun
-          2: '🌤️',  // Sun behind small cloud
-          3: '⛅',  // Sun behind cloud
-          4: '🌤️',  // Sun behind small cloud
+          1: '☀',  // Sun (U+2600)
+          2: '☀',  // Sun
+          3: '⛅',  // Sun behind cloud (U+26C5)
+          4: '⛅',  // Sun behind cloud
           // Cloudy
-          5: '☁️',  // Cloud
-          6: '☁️',  // Cloud (overcast)
+          5: '☁',  // Cloud (U+2601)
+          6: '☁',  // Cloud (overcast)
           // Fog
-          7: '🌫️',  // Fog
+          7: '≡',   // Fog (simple symbol)
           // Rain showers
-          8: '🌦️',  // Sun behind rain cloud
-          9: '🌦️',  // Sun behind rain cloud
-          10: '🌦️', // Sun behind rain cloud
+          8: '☂',   // Umbrella (U+2602)
+          9: '☂',   // Umbrella
+          10: '☂',  // Umbrella
           // Thunderstorm
-          11: '⛈️', // Cloud with lightning and rain
+          11: '⚡',  // Lightning (U+26A1)
           // Sleet showers
-          12: '🌨️', // Cloud with snow
-          13: '🌨️', // Cloud with snow
+          12: '☃',  // Snowman (U+2603)
+          13: '☃',  // Snowman
           // Snow showers
-          14: '🌨️', // Cloud with snow
-          15: '🌨️', // Cloud with snow
+          14: '❄',  // Snowflake (U+2744)
+          15: '❄',   // Snowflake
           // Rain
-          16: '🌧️', // Cloud with rain
-          17: '🌧️', // Cloud with rain
-          18: '🌧️', // Cloud with rain
+          16: '☂',  // Umbrella
+          17: '☂',  // Umbrella
+          18: '☂',  // Umbrella
           // Thunder
-          19: '⛈️', // Cloud with lightning and rain
+          19: '⚡',  // Lightning
           // Sleet
-          20: '🌨️', // Cloud with snow
-          21: '🌨️', // Cloud with snow
+          20: '☃',  // Snowman
+          21: '☃',  // Snowman
           // Snowfall
-          22: '❄️', // Snowflake
-          23: '❄️', // Snowflake
-          24: '❄️', // Snowflake
+          22: '❄',  // Snowflake
+          23: '❄',  // Snowflake
+          24: '❄',  // Snowflake
           // Rain showers and thunder
-          25: '⛈️', // Cloud with lightning and rain
+          25: '⚡',  // Lightning
           // Snow showers and thunder
-          26: '⛈️', // Cloud with lightning and rain
-          27: '⛈️', // Cloud with lightning and rain
+          26: '⚡',  // Lightning
+          27: '⚡',  // Lightning
         };
 
         // Default to cloudy if symbol not found

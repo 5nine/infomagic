@@ -353,10 +353,13 @@ body.tv-page {
 }
 
 .weather-icon {
-  font-size: 32px;
+  font-size: 36px;
   line-height: 1;
   display: inline-block;
   flex-shrink: 0;
+  font-weight: normal;
+  text-align: center;
+  min-width: 40px;
 }
 
 .weather-date-info {

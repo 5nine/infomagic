@@ -18,34 +18,17 @@ function fetchSMHI() {
       'category/pmp3g/version/2/geotype/point/' +
       `lon/${LON}/lat/${LAT}/data.json`;
 
-    const req = https.get(url, { timeout: 10000 }, res => {
+    https.get(url, res => {
       let data = '';
       res.on('data', d => data += d);
       res.on('end', () => {
-        clearTimeout(timeout);
         try {
           resolve(JSON.parse(data));
         } catch (e) {
           reject(e);
         }
       });
-    });
-
-    const timeout = setTimeout(() => {
-      req.destroy();
-      reject(new Error('Request timeout'));
-    }, 10000); // 10 second timeout
-
-    req.on('error', err => {
-      clearTimeout(timeout);
-      reject(err);
-    });
-
-    req.on('timeout', () => {
-      req.destroy();
-      clearTimeout(timeout);
-      reject(new Error('Request timeout'));
-    });
+    }).on('error', reject);
   });
 }
 
@@ -105,13 +88,14 @@ async function getWeather() {
       const wind =
         d.winds.reduce((a, b) => a + b, 0) / d.winds.length;
 
-      // vanligaste symbolen för dagen (optimized - count frequencies once)
-      const symbolCounts = {};
-      d.symbols.forEach(s => {
-        symbolCounts[s] = (symbolCounts[s] || 0) + 1;
-      });
-      const symbol = Object.entries(symbolCounts)
-        .sort((a, b) => b[1] - a[1])[0]?.[0] || d.symbols[0];
+      // vanligaste symbolen för dagen
+      const symbol = d.symbols
+        .sort(
+          (a, b) =>
+            d.symbols.filter(x => x === a).length -
+            d.symbols.filter(x => x === b).length
+        )
+        .pop();
 
       return {
         date,

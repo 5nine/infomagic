@@ -353,8 +353,9 @@ body.tv-page {
 }
 
 .weather-icon {
-  width: 32px;
-  height: 32px;
+  font-size: 32px;
+  line-height: 1;
+  display: inline-block;
   flex-shrink: 0;
 }
 

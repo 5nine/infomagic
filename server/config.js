@@ -5,7 +5,7 @@ const CONFIG_PATH = path.join(__dirname, '../config/config.json');
 
 const DEFAULT_CONFIG = {
   minImageLongSide: 1280,
-  slideshowInterval: 5,
+  slideshowInterval: 15,
   calendar: {
     calendarId: 'xxxxxxxx@group.calendar.google.com',
     view: 'WEEK',

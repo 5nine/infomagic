@@ -15,6 +15,25 @@
 
     <hr />
 
+    <h2>Bildspelsinställningar</h2>
+    <div style="margin-bottom: 20px">
+      <label for="interval-input">
+        Intervall mellan bilder (sekunder):
+      </label>
+      <input
+        type="number"
+        id="interval-input"
+        min="1"
+        max="300"
+        value="15"
+        style="margin: 0 10px; padding: 5px; width: 80px"
+      />
+      <button onclick="saveInterval()">Spara intervall</button>
+      <span id="interval-status" style="margin-left: 10px"></span>
+    </div>
+
+    <hr />
+
     <div class="grid" id="images"></div>
 
     <script>
@@ -112,7 +131,49 @@
         window.location.href = '/';
       }
 
+      async function loadConfig() {
+        const cfg = await (await fetch('/api/config')).json();
+        const intervalInput = document.getElementById('interval-input');
+        intervalInput.value = cfg.slideshowInterval || 15;
+      }
+
+      async function saveInterval() {
+        const intervalInput = document.getElementById('interval-input');
+        const interval = parseInt(intervalInput.value);
+        const statusEl = document.getElementById('interval-status');
+
+        if (isNaN(interval) || interval < 1 || interval > 300) {
+          statusEl.textContent = 'Ogiltigt intervall (1-300 sekunder)';
+          statusEl.style.color = 'red';
+          return;
+        }
+
+        try {
+          const response = await fetch('/api/config/slideshow-interval', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ interval }),
+          });
+
+          if (response.ok) {
+            statusEl.textContent = 'Sparat!';
+            statusEl.style.color = 'green';
+            setTimeout(() => {
+              statusEl.textContent = '';
+            }, 2000);
+          } else {
+            const data = await response.json();
+            statusEl.textContent = data.error || 'Kunde inte spara';
+            statusEl.style.color = 'red';
+          }
+        } catch (err) {
+          statusEl.textContent = 'Fel vid sparande';
+          statusEl.style.color = 'red';
+        }
+      }
+
       load();
+      loadConfig();
     </script>
   </body>
 </html>

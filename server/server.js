@@ -171,6 +171,23 @@ app.post('/api/config', requireRole(['admin']), (req, res) => {
   res.json({ ok: true });
 });
 
+app.post(
+  '/api/config/slideshow-interval',
+  requireRole(['admin', 'editor']),
+  (req, res) => {
+    const { interval } = req.body;
+    if (typeof interval !== 'number' || interval < 1 || interval > 300) {
+      return res
+        .status(400)
+        .json({ error: 'Interval måste vara mellan 1 och 300 sekunder' });
+    }
+    const cfg = loadConfig();
+    cfg.slideshowInterval = interval;
+    saveConfig(cfg);
+    res.json({ ok: true, slideshowInterval: interval });
+  },
+);
+
 app.delete('/api/images/:id', requireRole(['admin', 'editor']), deleteImage);
 
 const { getWeather } = require('./weather');

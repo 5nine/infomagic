@@ -4,6 +4,10 @@ const sharp = require('sharp');
 const multer = require('multer');
 const { loadConfig, saveConfig } = require('./config');
 
+// Limit Sharp concurrency to prevent memory issues on RPi
+sharp.concurrency(1);
+sharp.cache({ memory: 50, files: 0 }); // Limit memory cache to 50MB
+
 const IMAGE_ROOT = path.join(__dirname, '../public/images');
 const ORIGINALS = path.join(IMAGE_ROOT, 'originals');
 const THUMBS = path.join(IMAGE_ROOT, 'thumbs');
@@ -27,16 +31,17 @@ function broadcastImageList() {
 }
 
 async function handleUpload(req, res) {
-  const cfg = loadConfig();
+  const cfg = loadConfig(); // Load once at the start
   const results = [];
 
+  // Process files sequentially to avoid memory pressure on RPi
   for (const file of req.files) {
     try {
       const meta = await sharp(file.path).metadata();
       const longSide = Math.max(meta.width, meta.height);
 
       if (longSide < cfg.minImageLongSide) {
-        fs.unlinkSync(file.path);
+        await fs.promises.unlink(file.path).catch(() => {});
         results.push({
           file: file.originalname,
           ok: false,
@@ -48,25 +53,29 @@ async function handleUpload(req, res) {
       const target = path.join(ORIGINALS, file.originalname);
       const thumb = path.join(THUMBS, file.originalname);
 
-      fs.renameSync(file.path, target);
+      await fs.promises.rename(file.path, target);
 
+      // Process thumbnail with memory-efficient settings
       await sharp(target)
         .rotate() // Auto-rotate based on EXIF orientation
         .resize(320, 320, { fit: 'cover', position: 'centre' })
+        .jpeg({ quality: 85, mozjpeg: true }) // Use JPEG for thumbnails to save memory
         .toFile(thumb);
 
-      // Add new image to the order array
-      const cfg = loadConfig();
-      if (!cfg.imageOrder) {
-        cfg.imageOrder = [];
+      // Add new image to the order array (reload config to get latest)
+      const currentCfg = loadConfig();
+      if (!currentCfg.imageOrder) {
+        currentCfg.imageOrder = [];
       }
-      if (!cfg.imageOrder.includes(file.originalname)) {
-        cfg.imageOrder.push(file.originalname);
-        saveConfig(cfg);
+      if (!currentCfg.imageOrder.includes(file.originalname)) {
+        currentCfg.imageOrder.push(file.originalname);
+        saveConfig(currentCfg);
       }
 
       results.push({ file: file.originalname, ok: true });
     } catch (err) {
+      // Clean up temp file on error
+      await fs.promises.unlink(file.path).catch(() => {});
       results.push({ file: file.originalname, ok: false, error: err.message });
     }
   }
@@ -81,24 +90,36 @@ async function handleUpload(req, res) {
 
 function listImagesSync() {
   const cfg = loadConfig();
-  const files = fs.readdirSync(ORIGINALS).filter(f => !f.startsWith('.'));
+  let files;
+  try {
+    files = fs.readdirSync(ORIGINALS).filter(f => !f.startsWith('.'));
+  } catch (err) {
+    // Directory might not exist yet
+    return [];
+  }
 
   // Get stored image order from config, or use alphabetical as fallback
   const imageOrder = cfg.imageOrder || [];
 
+  // Create a map for O(1) lookup instead of O(n) indexOf
+  const orderMap = new Map();
+  imageOrder.forEach((name, index) => {
+    orderMap.set(name, index);
+  });
+
   // Sort files according to stored order, with new files appended at the end
   const sortedFiles = files.sort((a, b) => {
-    const indexA = imageOrder.indexOf(a);
-    const indexB = imageOrder.indexOf(b);
+    const indexA = orderMap.get(a);
+    const indexB = orderMap.get(b);
 
     // If both are in the order array, sort by their position
-    if (indexA !== -1 && indexB !== -1) {
+    if (indexA !== undefined && indexB !== undefined) {
       return indexA - indexB;
     }
     // If only A is in the order array, A comes first
-    if (indexA !== -1) return -1;
+    if (indexA !== undefined) return -1;
     // If only B is in the order array, B comes first
-    if (indexB !== -1) return 1;
+    if (indexB !== undefined) return 1;
     // If neither is in the order array, sort alphabetically
     return a.localeCompare(b, 'sv');
   });
@@ -114,15 +135,25 @@ function listImages(req, res) {
   res.json(listImagesSync());
 }
 
-function deleteImage(req, res) {
+async function deleteImage(req, res) {
   const f = path.basename(req.params.id);
 
   const orig = path.join(ORIGINALS, f);
   const thumb = path.join(THUMBS, f);
 
   try {
-    if (fs.existsSync(orig)) fs.unlinkSync(orig);
-    if (fs.existsSync(thumb)) fs.unlinkSync(thumb);
+    // Use async file operations
+    const unlinkPromises = [];
+    try {
+      await fs.promises.access(orig);
+      unlinkPromises.push(fs.promises.unlink(orig));
+    } catch {}
+    try {
+      await fs.promises.access(thumb);
+      unlinkPromises.push(fs.promises.unlink(thumb));
+    } catch {}
+    
+    await Promise.all(unlinkPromises);
 
     // Remove from image order if it exists
     const cfg = loadConfig();

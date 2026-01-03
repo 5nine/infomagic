@@ -35,10 +35,77 @@
       let images = [];
       let currentState = { index: 0, playing: true };
       let ws = null;
+      const imageCache = new Map(); // Cache for preloaded images
+
+      /* ───── IMAGE PRELOADING ───── */
+      function preloadImage(url) {
+        // Return cached image if already loaded
+        if (imageCache.has(url)) {
+          return Promise.resolve(imageCache.get(url));
+        }
+
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => {
+            imageCache.set(url, img);
+            resolve(img);
+          };
+          img.onerror = reject;
+          img.src = url;
+        });
+      }
+
+      async function preloadImages() {
+        if (!images.length) return;
+
+        // Preload images with a small delay between each to avoid overwhelming RPi
+        // Priority: current + next 3 images first, then rest
+        const currentIdx = currentState.index % images.length;
+        const priorityImages = [];
+        const otherImages = [];
+
+        for (let i = 0; i < images.length; i++) {
+          const idx = (currentIdx + i) % images.length;
+          if (i <= 3) {
+            priorityImages.push(images[idx]);
+          } else {
+            otherImages.push(images[idx]);
+          }
+        }
+
+        // Preload priority images immediately
+        for (const img of priorityImages) {
+          preloadImage(img.original).catch(() => {});
+        }
+
+        // Preload other images with delay to avoid overwhelming the system
+        for (let i = 0; i < otherImages.length; i++) {
+          setTimeout(() => {
+            preloadImage(otherImages[i].original).catch(() => {});
+          }, i * 200); // 200ms delay between each
+        }
+      }
+
+      function preloadNextImages(currentIndex) {
+        if (!images.length) return;
+
+        // Preload next 3 images ahead
+        for (let i = 1; i <= 3; i++) {
+          const nextIdx = (currentIndex + i) % images.length;
+          const nextImg = images[nextIdx];
+          if (nextImg && !imageCache.has(nextImg.original)) {
+            preloadImage(nextImg.original).catch(() => {});
+          }
+        }
+      }
 
       /* ───── BILDER ───── */
       async function loadImages() {
         images = await (await fetch('/api/images')).json();
+        // Clear old cache when images change
+        imageCache.clear();
+        // Preload all images
+        preloadImages();
         // Update display when images are loaded
         updateSlideDisplay();
       }
@@ -61,6 +128,9 @@
               updateSlideDisplay();
             } else if (data.type === 'images-updated') {
               images = data.images;
+              // Clear cache and preload new images
+              imageCache.clear();
+              preloadImages();
               updateSlideDisplay();
             }
           } catch (err) {
@@ -80,26 +150,39 @@
       }
 
       /* ───── SLIDESHOW DISPLAY UPDATE ───── */
-      function updateSlideDisplay() {
+      async function updateSlideDisplay() {
         if (!images.length) return;
 
         const idx =
           ((currentState.index % images.length) + images.length) %
           images.length;
 
+        const slide = document.getElementById('slide');
         const slideNext = document.getElementById('slide-next');
         const currentSlide =
           document.querySelector('.slide-image.active') || slide;
         const nextSlide = currentSlide === slide ? slideNext : slide;
 
-        // Set the new image source
-        nextSlide.src = images[idx].original;
+        const imageUrl = images[idx].original;
+
+        // Ensure image is preloaded before displaying
+        try {
+          await preloadImage(imageUrl);
+        } catch (err) {
+          console.warn('Failed to preload image, using direct load:', err);
+        }
+
+        // Set the new image source (will use cached image if available)
+        nextSlide.src = imageUrl;
 
         // Update blur background
         document.documentElement.style.setProperty(
           '--blur-image',
-          `url(${images[idx].original})`,
+          `url(${imageUrl})`,
         );
+
+        // Preload next images in the background
+        preloadNextImages(idx);
 
         // Trigger transition
         currentSlide.classList.remove('active');
@@ -181,22 +264,43 @@
       async function loadWeather() {
         const data = await (await fetch('/api/weather')).json();
         weatherRows.innerHTML = '';
-        data.forEach(d => {
+        
+        const dayNames = ['Sön', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör'];
+        
+        data.forEach((d, index) => {
           const iconSvg = getWeatherIcon(d.symbol);
-          // Format date from YYYY-MM-DD to DD/MM
-          const dateParts = d.date.slice(5).split('-');
-          const formattedDate = `${dateParts[1]}/${dateParts[0]}`;
+          // Format date from YYYY-MM-DD to Scandinavian format (DD/MM)
+          const dateParts = d.date.split('-');
+          const year = dateParts[0];
+          const month = dateParts[1];
+          const day = dateParts[2];
+          const formattedDate = `${day}/${month}`;
+          
+          // Get day name
+          const dateObj = new Date(year, month - 1, day);
+          const dayName = dayNames[dateObj.getDay()];
+          
+          // Check if today
+          const today = new Date();
+          const isToday = dateObj.toDateString() === today.toDateString();
+          const dateLabel = isToday ? 'Idag' : `${dayName} ${formattedDate}`;
+          
           weatherRows.innerHTML += `
       <div class="weather-day">
         <div class="weather-left">
           <svg class="weather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             ${iconSvg}
           </svg>
-          ${formattedDate}
+          <div class="weather-date-info">
+            <div class="weather-date">${dateLabel}</div>
+            ${d.precip ? '<div class="weather-precip">Nederbörd</div>' : ''}
+          </div>
         </div>
-        <div class="weather-mid">Vind ${Math.round(d.wind)} m/s</div>
+        <div class="weather-mid">
+          <div class="weather-wind">${Math.round(d.wind)} m/s</div>
+        </div>
         <div class="weather-right">
-          ${Math.round(d.min)}° / ${Math.round(d.max)}°
+          <div class="weather-temp">${Math.round(d.min)}° / ${Math.round(d.max)}°</div>
         </div>
       </div>`;
         });
@@ -207,6 +311,7 @@
         await loadImages();
 
         // Initialize first slide
+        const slide = document.getElementById('slide');
         slide.classList.add('active');
 
         // Connect to WebSocket for real-time updates

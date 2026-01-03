@@ -330,7 +330,7 @@ body.tv-page {
 }
 
 #weather h3 {
-  margin: 0 0 12px 0;
+  margin: 0 0 10px 0;
   font-size: 15px;
   font-weight: 600;
 }
@@ -339,34 +339,64 @@ body.tv-page {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
-  font-size: 14px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  padding: 6px 0;
 }
 
 .weather-left {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 120px;
+  gap: 8px;
+  min-width: 140px;
+  flex: 1;
 }
 
 .weather-icon {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   fill: #cfd6d3;
   stroke: #cfd6d3;
+  flex-shrink: 0;
+}
+
+.weather-date-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.weather-date {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.weather-precip {
+  font-size: 10px;
+  opacity: 0.7;
+  color: #8ab4c4;
 }
 
 .weather-mid {
-  flex: 1;
-  font-size: 12px;
+  flex: 0 0 auto;
+  text-align: center;
+  padding: 0 8px;
+}
+
+.weather-wind {
+  font-size: 11px;
   opacity: 0.75;
 }
 
 .weather-right {
-  min-width: 70px;
+  min-width: 75px;
   text-align: right;
+  flex-shrink: 0;
+}
+
+.weather-temp {
   font-weight: 600;
+  font-size: 13px;
 }
 
 /* ───── TOUCH PAGE ───── */

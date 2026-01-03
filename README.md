@@ -21,7 +21,6 @@ Systemet är byggt för att:
 - SMHI-väder (5 dagar)
 - Admin- och redaktörsgränssnitt
 - Autostart via systemd
-- Autostart via LXsession (för desktop-sessioner)
 - TV styrs via HDMI-CEC
 - Touchskärm tänds/släcks via backlight
 - Schemalagd drift (t.ex. 06:00–18:00)
@@ -62,8 +61,6 @@ Installationsscriptet automatiserar:
   - `infomagic-backend`
   - `infomagic-tv`
   - `infomagic-touch`
-- konfiguration av LXsession autostart:
-  - startar automatiskt `startup.sh` vid desktop-inloggning
 - konfiguration av `sudoers` för:
   - HDMI-CEC (`cec-client`)
   - touch-backlight (`tee`)

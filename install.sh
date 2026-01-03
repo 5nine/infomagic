@@ -245,24 +245,24 @@ fi
 # LXsession autostart
 # ─────────────────────────────────────
 echo "▶ Installerar LXsession autostart..."
-LXSESSION_AUTOSTART_DIR="/etc/xdg/lxsession/LXDE-pi/autostart"
-# Create directory if it doesn't exist
-if [ ! -d "$LXSESSION_AUTOSTART_DIR" ]; then
-  if [ -e "$LXSESSION_AUTOSTART_DIR" ]; then
-    echo "  ⚠ $LXSESSION_AUTOSTART_DIR finns redan som fil, hoppar över..."
-  else
-    mkdir -p "$LXSESSION_AUTOSTART_DIR"
-  fi
-fi
+LXSESSION_AUTOSTART="/etc/xdg/lxsession/LXDE-pi/autostart"
 
-# Install autostart entry from repo
-if [ -f "$SCRIPT_DIR/lxsession/infomagic-startup.desktop" ]; then
-  sed -e "s|@APP_DIR@|$APP_DIR|g" \
-      "$SCRIPT_DIR/lxsession/infomagic-startup.desktop" > "$LXSESSION_AUTOSTART_DIR/infomagic-startup.desktop"
-  echo "  → LXsession autostart installerad i $LXSESSION_AUTOSTART_DIR"
-else
-  echo "  ⚠ LXsession autostart-fil hittades inte, skapar manuellt..."
-  cat > "$LXSESSION_AUTOSTART_DIR/infomagic-startup.desktop" <<EOF
+if [ -f "$LXSESSION_AUTOSTART" ]; then
+  # autostart exists as a file - append startup command if not already present
+  if ! grep -q "$APP_DIR/startup.sh" "$LXSESSION_AUTOSTART"; then
+    echo "$APP_DIR/startup.sh &" >> "$LXSESSION_AUTOSTART"
+    echo "  → LXsession autostart-kommando tillagt i $LXSESSION_AUTOSTART"
+  else
+    echo "  → LXsession autostart finns redan i $LXSESSION_AUTOSTART"
+  fi
+elif [ -d "$LXSESSION_AUTOSTART" ]; then
+  # autostart exists as a directory - create desktop entry
+  if [ -f "$SCRIPT_DIR/lxsession/infomagic-startup.desktop" ]; then
+    sed -e "s|@APP_DIR@|$APP_DIR|g" \
+        "$SCRIPT_DIR/lxsession/infomagic-startup.desktop" > "$LXSESSION_AUTOSTART/infomagic-startup.desktop"
+    echo "  → LXsession autostart installerad i $LXSESSION_AUTOSTART/"
+  else
+    cat > "$LXSESSION_AUTOSTART/infomagic-startup.desktop" <<EOF
 [Desktop Entry]
 Type=Application
 Name=InfoMagic Startup
@@ -271,6 +271,27 @@ Exec=$APP_DIR/startup.sh
 Terminal=false
 X-GNOME-Autostart-enabled=true
 EOF
+    echo "  → LXsession autostart installerad i $LXSESSION_AUTOSTART/"
+  fi
+else
+  # autostart doesn't exist - create as directory and add desktop entry
+  mkdir -p "$LXSESSION_AUTOSTART"
+  if [ -f "$SCRIPT_DIR/lxsession/infomagic-startup.desktop" ]; then
+    sed -e "s|@APP_DIR@|$APP_DIR|g" \
+        "$SCRIPT_DIR/lxsession/infomagic-startup.desktop" > "$LXSESSION_AUTOSTART/infomagic-startup.desktop"
+    echo "  → LXsession autostart installerad i $LXSESSION_AUTOSTART/"
+  else
+    cat > "$LXSESSION_AUTOSTART/infomagic-startup.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=InfoMagic Startup
+Comment=Start InfoMagic displays automatically
+Exec=$APP_DIR/startup.sh
+Terminal=false
+X-GNOME-Autostart-enabled=true
+EOF
+    echo "  → LXsession autostart installerad i $LXSESSION_AUTOSTART/"
+  fi
 fi
 
 echo

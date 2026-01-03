@@ -263,6 +263,7 @@
 
       async function loadWeather() {
         const data = await (await fetch('/api/weather')).json();
+        const weatherRows = document.getElementById('weatherRows');
         weatherRows.innerHTML = '';
         
         const dayNames = ['Sön', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör'];

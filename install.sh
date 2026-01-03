@@ -241,6 +241,31 @@ if [ -f "$APP_DIR/calibrate-touch.sh" ]; then
   chown "$APP_USER:$APP_USER" "$APP_DIR/calibrate-touch.sh"
 fi
 
+# ─────────────────────────────────────
+# LXsession autostart
+# ─────────────────────────────────────
+echo "▶ Installerar LXsession autostart..."
+LXSESSION_AUTOSTART_DIR="/etc/xdg/lxsession/LXDE-pi/autostart"
+mkdir -p "$LXSESSION_AUTOSTART_DIR"
+
+# Install autostart entry from repo
+if [ -f "$SCRIPT_DIR/lxsession/infomagic-startup.desktop" ]; then
+  sed -e "s|@APP_DIR@|$APP_DIR|g" \
+      "$SCRIPT_DIR/lxsession/infomagic-startup.desktop" > "$LXSESSION_AUTOSTART_DIR/infomagic-startup.desktop"
+  echo "  → LXsession autostart installerad i $LXSESSION_AUTOSTART_DIR"
+else
+  echo "  ⚠ LXsession autostart-fil hittades inte, skapar manuellt..."
+  cat > "$LXSESSION_AUTOSTART_DIR/infomagic-startup.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=InfoMagic Startup
+Comment=Start InfoMagic displays automatically
+Exec=$APP_DIR/startup.sh
+Terminal=false
+X-GNOME-Autostart-enabled=true
+EOF
+fi
+
 echo
 echo "====================================="
 echo "✅ Installation klar"

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=InfoMagic Startup
+Comment=Start InfoMagic displays automatically
+Exec=@APP_DIR@/startup.sh
+Terminal=false
+X-GNOME-Autostart-enabled=true
+

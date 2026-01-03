@@ -208,6 +208,53 @@
       }
 
       /* ───── VÄDER ───── */
+      function getWeatherColor(symbol) {
+        // Color mapping based on weather conditions
+        const colors = {
+          // Clear/Sunny - yellow/orange
+          1: '#ffd700',  // Gold
+          2: '#ffb84d',  // Light orange
+          3: '#ffa500',  // Orange
+          4: '#ffb84d',  // Light orange
+          // Cloudy - gray/blue-gray
+          5: '#a0a8a5',  // Gray
+          6: '#8a9ba8',  // Blue-gray
+          // Fog - light gray
+          7: '#b0b8b5',  // Light gray
+          // Rain - blue
+          8: '#4a9eff',  // Bright blue
+          9: '#5ba8ff',  // Light blue
+          10: '#6bb8ff', // Lighter blue
+          // Thunderstorm - purple/yellow
+          11: '#9d4edd', // Purple
+          // Sleet - light blue
+          12: '#7ab8d4', // Light blue
+          13: '#8ac8e4', // Lighter blue
+          // Snow - light blue/cyan
+          14: '#b0d4e8', // Light cyan
+          15: '#c0e4f0', // Lighter cyan
+          // Rain (continuous)
+          16: '#4a9eff', // Bright blue
+          17: '#5ba8ff', // Light blue
+          18: '#6bb8ff', // Lighter blue
+          // Thunder
+          19: '#9d4edd', // Purple
+          // Sleet (continuous)
+          20: '#7ab8d4', // Light blue
+          21: '#8ac8e4', // Lighter blue
+          // Snowfall
+          22: '#b0d4e8', // Light cyan
+          23: '#c0e4f0', // Lighter cyan
+          24: '#d0e8f0', // Lightest cyan
+          // Rain and thunder
+          25: '#7d5edd', // Purple-blue
+          // Snow and thunder
+          26: '#9d7edd', // Light purple
+          27: '#ad8eed', // Lighter purple
+        };
+        return colors[symbol] || '#a0a8a5'; // Default gray
+      }
+
       function getWeatherIcon(symbol) {
         // SMHI weather symbol codes (Wsymb2) mapped to SVG icons
         const icons = {
@@ -266,29 +313,31 @@
         weatherRows.innerHTML = '';
         
         const dayNames = ['Sön', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör'];
+        const monthNames = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
         
         data.forEach((d, index) => {
           const iconSvg = getWeatherIcon(d.symbol);
-          // Format date from YYYY-MM-DD to Scandinavian format (DD/MM)
+          const iconColor = getWeatherColor(d.symbol);
+          // Format date from YYYY-MM-DD to Scandinavian format (Sön 4 jan)
           const dateParts = d.date.split('-');
           const year = dateParts[0];
-          const month = dateParts[1];
-          const day = dateParts[2];
-          const formattedDate = `${day}/${month}`;
+          const month = parseInt(dateParts[1], 10);
+          const day = parseInt(dateParts[2], 10);
           
           // Get day name
           const dateObj = new Date(year, month - 1, day);
           const dayName = dayNames[dateObj.getDay()];
+          const monthName = monthNames[month - 1];
           
           // Check if today
           const today = new Date();
           const isToday = dateObj.toDateString() === today.toDateString();
-          const dateLabel = isToday ? 'Idag' : `${dayName} ${formattedDate}`;
+          const dateLabel = isToday ? 'Idag' : `${dayName} ${day} ${monthName}`;
           
           weatherRows.innerHTML += `
       <div class="weather-day">
         <div class="weather-left">
-          <svg class="weather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <svg class="weather-icon" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="1.5" style="fill: ${iconColor}; stroke: ${iconColor};">
             ${iconSvg}
           </svg>
           <div class="weather-date-info">

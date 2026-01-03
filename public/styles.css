@@ -325,13 +325,13 @@ body.tv-page {
 /* VÄDER */
 #weather {
   flex: 1;
-  padding: 18px 20px;
+  padding: 20px 24px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 #weather h3 {
-  margin: 0 0 10px 0;
-  font-size: 15px;
+  margin: 0 0 16px 0;
+  font-size: 17px;
   font-weight: 600;
 }
 
@@ -339,40 +339,38 @@ body.tv-page {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 13px;
-  padding: 6px 0;
+  margin-bottom: 14px;
+  font-size: 15px;
+  padding: 10px 0;
 }
 
 .weather-left {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 140px;
+  gap: 12px;
+  min-width: 160px;
   flex: 1;
 }
 
 .weather-icon {
-  width: 24px;
-  height: 24px;
-  fill: #cfd6d3;
-  stroke: #cfd6d3;
+  width: 32px;
+  height: 32px;
   flex-shrink: 0;
 }
 
 .weather-date-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .weather-date {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 500;
 }
 
 .weather-precip {
-  font-size: 10px;
+  font-size: 12px;
   opacity: 0.7;
   color: #8ab4c4;
 }
@@ -380,23 +378,23 @@ body.tv-page {
 .weather-mid {
   flex: 0 0 auto;
   text-align: center;
-  padding: 0 8px;
+  padding: 0 12px;
 }
 
 .weather-wind {
-  font-size: 11px;
+  font-size: 13px;
   opacity: 0.75;
 }
 
 .weather-right {
-  min-width: 75px;
+  min-width: 85px;
   text-align: right;
   flex-shrink: 0;
 }
 
 .weather-temp {
   font-weight: 600;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 /* ───── TOUCH PAGE ───── */

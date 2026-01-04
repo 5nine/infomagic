@@ -65,8 +65,18 @@
           }),
         });
       }
-      function call(url) {
-        fetch(url, { method: 'POST' });
+      async function call(url) {
+        try {
+          const response = await fetch(url, { method: 'POST' });
+          const data = await response.json();
+          if (data.ok) {
+            alert('Kommando utfört!');
+          } else {
+            alert('Fel: ' + (data.error || 'Okänt fel'));
+          }
+        } catch (error) {
+          alert('Fel vid anrop: ' + error.message);
+        }
       }
       async function logout() {
         await fetch('/logout', { method: 'POST' });

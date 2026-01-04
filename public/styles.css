@@ -404,9 +404,6 @@ body.touch-page {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  /* Burn-in prevention: subtle pixel shifting animation */
-  animation: burnin-prevention 600s infinite ease-in-out;
-  position: relative;
 }
 
 /* Burn-in prevention animation: slowly shifts content in a circular pattern
@@ -440,6 +437,8 @@ body.touch-page {
   padding-bottom: 200px;
   overflow-y: auto;
   overflow-x: hidden;
+  /* Burn-in prevention: subtle pixel shifting animation applied only to scrollable content */
+  animation: burnin-prevention 600s infinite ease-in-out;
 }
 
 .touch-page .thumb {
@@ -471,6 +470,8 @@ body.touch-page {
   display: flex;
   justify-content: space-evenly;
   align-items: center;
+  /* Burn-in prevention: separate animation for fixed controls */
+  animation: burnin-prevention 600s infinite ease-in-out;
 }
 
 .btn {

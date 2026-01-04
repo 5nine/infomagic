@@ -118,18 +118,20 @@ async function getWeather() {
         : null;
 
       // Korrigera baserat på temperatur: om max-temp är under 0°C måste det vara snö
-      // Om max-temp är under 2°C och API säger regn, ändra till snö
-      if (max < 0) {
-        // Vid minusgrader måste det vara snö
-        if (d.precipAmount > 0) {
+      // Temperaturkontrollen går före API:ns klassificering, även om precipAmount är 0
+      if (d.precipAmount > 0 || precipType !== null) {
+        // Vid minusgrader MÅSTE det vara snö, oavsett vad API säger
+        if (max < 0) {
           precipType = 3;
         }
-      } else if (precipType === 1 && max < 2) {
-        // Om API säger regn men max-temp är nära noll, ändra till snö
-        precipType = 3;
-      } else if (precipType === null && d.precipAmount > 0 && max < 2) {
+        // Om max-temp är under 2°C och API säger regn, ändra till snö
+        else if (precipType === 1 && max < 2) {
+          precipType = 3;
+        }
         // Om det finns nederbörd men ingen typ, använd snö vid låg temperatur
-        precipType = 3;
+        else if (precipType === null && d.precipAmount > 0 && max < 2) {
+          precipType = 3;
+        }
       }
 
       return {

@@ -90,13 +90,14 @@ async function handleUpload(req, res) {
         .toFile(thumb);
 
       // Add new image to the order array
-      const cfg = loadConfig();
-      if (!cfg.imageOrder) {
-        cfg.imageOrder = [];
+      // Reload config to get latest imageOrder (in case it was modified)
+      const currentCfg = loadConfig();
+      if (!currentCfg.imageOrder) {
+        currentCfg.imageOrder = [];
       }
-      if (!cfg.imageOrder.includes(file.originalname)) {
-        cfg.imageOrder.push(file.originalname);
-        saveConfig(cfg);
+      if (!currentCfg.imageOrder.includes(file.originalname)) {
+        currentCfg.imageOrder.push(file.originalname);
+        saveConfig(currentCfg);
       }
 
       results.push({ file: file.originalname, ok: true });

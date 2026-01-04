@@ -24,6 +24,8 @@ Systemet är byggt för att:
 - TV styrs via HDMI-CEC
 - Touchskärm tänds/släcks via backlight
 - Schemalagd drift (t.ex. 06:00–18:00)
+- Burn-in prevention via subtil pixel-shift animation
+- WebSocket för realtidsuppdateringar
 
 ---
 
@@ -71,7 +73,11 @@ Scriptet är **idempotent** och kan köras flera gånger.
 
 ## Vad `install.sh` INTE gör (medvetet)
 
-Vissa delar kräver manuell verifiering eller bör inte automatiseras.
+Vissa delar kräver manuell verifiering eller bör inte automatiseras:
+
+- Konfiguration av Google Calendar-ID (görs via admin-gränssnittet)
+- Kalibrering av touch-input (använd `calibrate-touch.sh` vid behov)
+- Verifiering av HDMI-CEC-funktionalitet (testa manuellt efter installation)
 
 ---
 
@@ -90,6 +96,21 @@ Central konfiguration som läses av backend vid start och påverkar:
 ### config/users.json
 
 Användardata med lösenordshashar för admin och editor. Skapas automatiskt vid första installation.
+
+---
+
+### Touch-kalibrering
+
+Om touch-input inte fungerar korrekt, använd kalibreringsscriptet:
+
+```bash
+./calibrate-touch.sh
+```
+
+Scriptet hjälper till att:
+- Identifiera touch-enheten
+- Mappa touch-input till DSI-1-displayen
+- Verifiera kalibrering
 
 ---
 
@@ -158,6 +179,23 @@ sudo crontab -e
 
 InfoMagic-cron jobs identifieras med kommentaren `# InfoMagic scheduled on/off`.
 
+**Manuell körning av schemaläggning:**
+
+För att manuellt köra shutdown-proceduren (samma som cronjob vid av-tid):
+```bash
+echo "standby 0" | sudo cec-client -s -d 1 && echo 1 | sudo tee /sys/class/backlight/*/bl_power
+```
+
+För att manuellt köra startup-proceduren (samma som cronjob vid på-tid):
+```bash
+# Alternativ 1: Kör fullständig startup (rekommenderas)
+sudo /opt/infomagic/startup.sh
+
+# Alternativ 2: Endast tända displayer
+echo "on 0" | sudo cec-client -s -d 1
+echo 0 | sudo tee /sys/class/backlight/*/bl_power
+```
+
 ---
 
 ## Verifiering efter installation
@@ -187,7 +225,57 @@ Kontrollera att:
 - Admin **v1.0** (låst)
 - Editor **v1.0** (låst)
 - Polling: **1 sekund** (medvetet val)
-- WebSocket används inte i v1.0
+- WebSocket används för realtidsuppdateringar av bildspel och bildlista
+
+---
+
+## API-endpoints (admin)
+
+Följande systemkontroll-endpoints finns tillgängliga via admin-gränssnittet:
+
+- `POST /api/system/reboot` - Starta om systemet
+- `POST /api/system/tv/on` - Tänd TV via HDMI-CEC
+- `POST /api/system/tv/off` - Släck TV via HDMI-CEC
+- `POST /api/system/touch/on` - Tänd touchskärm (backlight)
+- `POST /api/system/touch/off` - Släck touchskärm (backlight)
+
+Alla endpoints kräver admin-roll och kan anropas via admin-gränssnittet eller direkt via API.
+
+---
+
+## Felsökning
+
+### Touch-input fungerar inte
+
+1. Kör kalibreringsscriptet: `./calibrate-touch.sh`
+2. Verifiera touch-enhet: `xinput list`
+3. Testa touch-input: `xinput test <device-name>`
+4. Kontrollera display-mappning: `xrandr --listmonitors`
+
+### TV startar inte automatiskt
+
+1. Verifiera HDMI-CEC: `echo "on 0" | cec-client -s -d 1`
+2. Kontrollera TV-inställningar (CEC måste vara aktiverat)
+3. Prova annan HDMI-port
+4. Kontrollera systemd-tjänst: `systemctl status infomagic-tv`
+
+### Touchskärmen är svart
+
+1. Kontrollera backlight: `cat /sys/class/backlight/*/bl_power` (ska vara 0)
+2. Tänd manuellt: `echo 0 | sudo tee /sys/class/backlight/*/bl_power`
+3. Kontrollera systemd-tjänst: `systemctl status infomagic-touch`
+4. Kontrollera Chromium: `ps aux | grep chromium`
+
+### Backend startar inte
+
+1. Kontrollera systemd-tjänst: `systemctl status infomagic-backend`
+2. Kontrollera loggar: `journalctl -u infomagic-backend -n 50`
+3. Verifiera Node.js-beroenden: `cd /opt/infomagic/server && npm list`
+4. Kontrollera port 3000: `sudo netstat -tlnp | grep 3000`
+
+### Burn-in prevention
+
+Systemet inkluderar automatisk burn-in prevention via CSS-animation som subtilt förskjuter innehåll med 1-2 pixlar i en cirkulär rörelse över 10 minuter. Detta är aktivt på touch-displayen och kräver ingen konfiguration.
 
 ---
 

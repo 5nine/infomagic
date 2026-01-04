@@ -67,17 +67,19 @@ async function handleUpload(req, res) {
           fit: 'inside',
           withoutEnlargement: true,
         });
+        
+        // Apply format-specific quality settings only when scaling
+        // This optimizes the output while preserving the original format
+        if (isJpeg) {
+          pipeline = pipeline.jpeg({ quality: 92, mozjpeg: true });
+        } else if (isPng) {
+          pipeline = pipeline.png({ quality: 92, compressionLevel: 9 });
+        } else if (isWebP) {
+          pipeline = pipeline.webp({ quality: 92 });
+        }
+        // For other formats, Sharp will preserve the format automatically
       }
-
-      // Apply format-specific quality settings for better compression
-      if (isJpeg) {
-        pipeline = pipeline.jpeg({ quality: 92, mozjpeg: true });
-      } else if (isPng) {
-        pipeline = pipeline.png({ quality: 92, compressionLevel: 9 });
-      } else if (isWebP) {
-        pipeline = pipeline.webp({ quality: 92 });
-      }
-      // For other formats, Sharp will preserve the format automatically
+      // If not scaling, just rotate and preserve original format/quality
 
       await pipeline.toFile(target);
       fs.unlinkSync(file.path); // Remove temp file

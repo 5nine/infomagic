@@ -115,10 +115,30 @@
 
       async function upload() {
         const f = document.getElementById('files').files;
+        if (f.length === 0) {
+          alert('Välj bilder att ladda upp');
+          return;
+        }
+        
         const fd = new FormData();
         for (const file of f) fd.append('images', file);
-        await fetch('/api/images/upload', { method: 'POST', body: fd });
-        load();
+        
+        try {
+          const response = await fetch('/api/images/upload', { method: 'POST', body: fd });
+          const results = await response.json();
+          
+          // Check for errors
+          const errors = results.filter(r => !r.ok);
+          if (errors.length > 0) {
+            const errorMsg = errors.map(e => `${e.file}: ${e.error}`).join('\n');
+            alert('Några bilder kunde inte laddas upp:\n' + errorMsg);
+          }
+          
+          load();
+        } catch (err) {
+          console.error('Upload error:', err);
+          alert('Fel vid uppladdning: ' + err.message);
+        }
       }
 
       async function remove(id) {

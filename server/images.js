@@ -48,10 +48,42 @@ async function handleUpload(req, res) {
       const target = path.join(ORIGINALS, file.originalname);
       const thumb = path.join(THUMBS, file.originalname);
 
-      fs.renameSync(file.path, target);
+      // Scale original to max display size for better performance
+      // This reduces memory usage when Chromium loads images
+      const maxDisplaySize = cfg.maxDisplayLongSide || 1920;
+      const needsScaling = longSide > maxDisplaySize;
 
+      // Determine output format based on original file extension
+      const ext = path.extname(file.originalname).toLowerCase();
+      const isJpeg = ['.jpg', '.jpeg'].includes(ext);
+      const isPng = ext === '.png';
+      const isWebP = ext === '.webp';
+
+      // Build processing pipeline
+      let pipeline = sharp(file.path).rotate(); // Auto-rotate based on EXIF orientation
+
+      if (needsScaling) {
+        pipeline = pipeline.resize(maxDisplaySize, maxDisplaySize, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        });
+      }
+
+      // Apply format-specific quality settings for better compression
+      if (isJpeg) {
+        pipeline = pipeline.jpeg({ quality: 92, mozjpeg: true });
+      } else if (isPng) {
+        pipeline = pipeline.png({ quality: 92, compressionLevel: 9 });
+      } else if (isWebP) {
+        pipeline = pipeline.webp({ quality: 92 });
+      }
+      // For other formats, Sharp will preserve the format automatically
+
+      await pipeline.toFile(target);
+      fs.unlinkSync(file.path); // Remove temp file
+
+      // Create thumbnail
       await sharp(target)
-        .rotate() // Auto-rotate based on EXIF orientation
         .resize(320, 320, { fit: 'cover', position: 'centre' })
         .toFile(thumb);
 

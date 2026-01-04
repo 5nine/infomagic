@@ -5,6 +5,7 @@ const CONFIG_PATH = path.join(__dirname, '../config/config.json');
 
 const DEFAULT_CONFIG = {
   minImageLongSide: 1280,
+  maxDisplayLongSide: 1920, // Scale originals to this size for display performance
   slideshowInterval: 15,
   calendar: {
     calendarId: 'xxxxxxxx@group.calendar.google.com',

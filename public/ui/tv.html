@@ -321,6 +321,7 @@
 
         loadCalendar();
         loadWeather();
+        setInterval(loadCalendar, 60 * 1000); // Update calendar every minute
         setInterval(loadWeather, 30 * 60 * 1000);
       })();
     </script>

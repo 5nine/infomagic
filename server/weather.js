@@ -107,7 +107,7 @@ async function getWeather() {
         .pop();
 
       // vanligaste nederbördstypen för dagen (1=rain, 3=snow)
-      const precipType = d.precipTypes.length > 0
+      let precipType = d.precipTypes.length > 0
         ? d.precipTypes
             .sort(
               (a, b) =>
@@ -116,6 +116,21 @@ async function getWeather() {
             )
             .pop()
         : null;
+
+      // Korrigera baserat på temperatur: om max-temp är under 0°C måste det vara snö
+      // Om max-temp är under 2°C och API säger regn, ändra till snö
+      if (max < 0) {
+        // Vid minusgrader måste det vara snö
+        if (d.precipAmount > 0) {
+          precipType = 3;
+        }
+      } else if (precipType === 1 && max < 2) {
+        // Om API säger regn men max-temp är nära noll, ändra till snö
+        precipType = 3;
+      } else if (precipType === null && d.precipAmount > 0 && max < 2) {
+        // Om det finns nederbörd men ingen typ, använd snö vid låg temperatur
+        precipType = 3;
+      }
 
       return {
         date,

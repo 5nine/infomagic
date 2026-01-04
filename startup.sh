@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 set -e
 
+# Disable screen saver
+echo "Disabling screen saver..."
+export DISPLAY=:0.0
+xset s off 2>/dev/null || true
+xset -dpms 2>/dev/null || true
+xset s noblank 2>/dev/null || true
+
+# Turn on TV via HDMI-CEC
+echo "Turning on TV via HDMI-CEC..."
+echo "on 0" | sudo cec-client -s -d 1 2>/dev/null || true
+
 # Enable HDMI-1-1 screen
 echo "Configuring displays..."
 xrandr --output HDMI-1-1 --auto --right-of DSI-1

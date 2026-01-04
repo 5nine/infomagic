@@ -404,6 +404,31 @@ body.touch-page {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
+  /* Burn-in prevention: subtle pixel shifting animation */
+  animation: burnin-prevention 600s infinite ease-in-out;
+  position: relative;
+}
+
+/* Burn-in prevention animation: slowly shifts content in a circular pattern
+   This prevents static pixels from causing burn-in on the touch screen.
+   The animation is very slow (10 minutes per cycle) and subtle (1-2px movement)
+   so it's imperceptible to users but effective for preventing burn-in. */
+@keyframes burnin-prevention {
+  0% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(1px, 0);
+  }
+  50% {
+    transform: translate(1px, 1px);
+  }
+  75% {
+    transform: translate(0, 1px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
 }
 
 /* THUMB GRID */

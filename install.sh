@@ -295,6 +295,57 @@ EOF
 fi
 
 # ─────────────────────────────────────
+# Disable screen saver
+# ─────────────────────────────────────
+echo "▶ Inaktiverar screen saver..."
+
+# Disable screen saver via xset (will be applied at runtime in startup.sh)
+# Also configure LXDE to not use screen saver
+if [ -f "$LXSESSION_AUTOSTART" ]; then
+  # Remove any existing screen saver related lines
+  sed -i '/xset s/d' "$LXSESSION_AUTOSTART" 2>/dev/null || true
+  sed -i '/xset -dpms/d' "$LXSESSION_AUTOSTART" 2>/dev/null || true
+  sed -i '/xset s noblank/d' "$LXSESSION_AUTOSTART" 2>/dev/null || true
+  # Add screen saver disabling commands
+  if ! grep -q "xset s off" "$LXSESSION_AUTOSTART"; then
+    echo "@xset s off" >> "$LXSESSION_AUTOSTART"
+    echo "@xset -dpms" >> "$LXSESSION_AUTOSTART"
+    echo "@xset s noblank" >> "$LXSESSION_AUTOSTART"
+    echo "  → Screen saver inaktiverad i $LXSESSION_AUTOSTART"
+  else
+    echo "  → Screen saver redan inaktiverad i $LXSESSION_AUTOSTART"
+  fi
+elif [ -d "$LXSESSION_AUTOSTART" ]; then
+  # Create a separate desktop entry for screen saver disabling
+  cat > "$LXSESSION_AUTOSTART/infomagic-disable-screensaver.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=InfoMagic Disable Screen Saver
+Comment=Disable screen saver for kiosk mode
+Exec=sh -c "xset s off && xset -dpms && xset s noblank"
+Terminal=false
+X-GNOME-Autostart-enabled=true
+EOF
+  echo "  → Screen saver inaktiverad via desktop entry"
+fi
+
+# Also disable screen saver system-wide for the user
+USER_HOME=$(getent passwd "$APP_USER" | cut -d: -f6)
+if [ -n "$USER_HOME" ] && [ -d "$USER_HOME" ]; then
+  XINITRC="$USER_HOME/.xinitrc"
+  if [ ! -f "$XINITRC" ] || ! grep -q "xset s off" "$XINITRC" 2>/dev/null; then
+    cat >> "$XINITRC" <<'EOF'
+# Disable screen saver for InfoMagic
+xset s off
+xset -dpms
+xset s noblank
+EOF
+    chown "$APP_USER:$APP_USER" "$XINITRC"
+    echo "  → Screen saver inaktiverad i $XINITRC"
+  fi
+fi
+
+# ─────────────────────────────────────
 # Cron jobs för schemaläggning
 # ─────────────────────────────────────
 echo "▶ Konfigurerar cron jobs för schemaläggning..."
@@ -337,9 +388,10 @@ fi
 
 # Add InfoMagic cron jobs
 # Note: bl_power 0 = backlight ON, bl_power 1 = backlight OFF
+# At startup (ON time), reboot the system - autostart will handle turning on displays
 cat >> "$TMP_CRON" <<EOF
 $CRON_MARKER
-$ON_MINUTE $ON_HOUR * * * echo "on 0" | cec-client -s -d 1 && echo 0 | tee /sys/class/backlight/*/bl_power >/dev/null 2>&1
+$ON_MINUTE $ON_HOUR * * * /sbin/reboot
 $OFF_MINUTE $OFF_HOUR * * * echo "standby 0" | cec-client -s -d 1 && echo 1 | tee /sys/class/backlight/*/bl_power >/dev/null 2>&1
 EOF
 

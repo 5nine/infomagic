@@ -159,14 +159,28 @@ app.get('/api/config', (req, res) => {
   res.json(loadConfig());
 });
 
-app.post('/api/config', requireRole(['admin']), (req, res) => {
+app.post('/api/config', requireRole(['admin', 'editor']), (req, res) => {
   const cfg = loadConfig();
-  if (req.body.calendar && cfg.calendar) {
-    // Deep merge for calendar object
-    Object.assign(cfg.calendar, req.body.calendar);
-    delete req.body.calendar;
+  const user = req.session.user;
+  
+  // Editors can only update calendar.view, not calendarId or other config
+  if (user.role === 'editor') {
+    if (req.body.calendar && cfg.calendar && req.body.calendar.view) {
+      // Only allow updating the view, preserve calendarId
+      cfg.calendar.view = req.body.calendar.view;
+    } else {
+      return res.status(403).json({ error: 'Redaktörer kan endast ändra kalendervy' });
+    }
+  } else {
+    // Admins can update everything
+    if (req.body.calendar && cfg.calendar) {
+      // Deep merge for calendar object
+      Object.assign(cfg.calendar, req.body.calendar);
+      delete req.body.calendar;
+    }
+    Object.assign(cfg, req.body);
   }
-  Object.assign(cfg, req.body);
+  
   saveConfig(cfg);
   res.json({ ok: true });
 });

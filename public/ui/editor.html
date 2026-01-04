@@ -34,6 +34,22 @@
 
     <hr />
 
+    <h2>Kalender</h2>
+    <div style="margin-bottom: 20px">
+      <label for="calendarView">Vy:</label>
+      <select
+        id="calendarView"
+        style="margin: 0 10px; padding: 5px"
+      >
+        <option value="WEEK">Vecka</option>
+        <option value="MONTH">Månad</option>
+      </select>
+      <button onclick="saveCalendarView()">Spara vy</button>
+      <span id="calendar-status" style="margin-left: 10px"></span>
+    </div>
+
+    <hr />
+
     <div class="grid" id="images"></div>
 
     <script>
@@ -155,6 +171,10 @@
         const cfg = await (await fetch('/api/config')).json();
         const intervalInput = document.getElementById('interval-input');
         intervalInput.value = cfg.slideshowInterval || 15;
+        if (cfg.calendar) {
+          const calendarView = document.getElementById('calendarView');
+          calendarView.value = cfg.calendar.view || 'WEEK';
+        }
       }
 
       async function saveInterval() {
@@ -173,6 +193,39 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ interval }),
+          });
+
+          if (response.ok) {
+            statusEl.textContent = 'Sparat!';
+            statusEl.style.color = 'green';
+            setTimeout(() => {
+              statusEl.textContent = '';
+            }, 2000);
+          } else {
+            const data = await response.json();
+            statusEl.textContent = data.error || 'Kunde inte spara';
+            statusEl.style.color = 'red';
+          }
+        } catch (err) {
+          statusEl.textContent = 'Fel vid sparande';
+          statusEl.style.color = 'red';
+        }
+      }
+
+      async function saveCalendarView() {
+        const calendarView = document.getElementById('calendarView');
+        const view = calendarView.value;
+        const statusEl = document.getElementById('calendar-status');
+
+        try {
+          const response = await fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              calendar: {
+                view: view,
+              },
+            }),
           });
 
           if (response.ok) {

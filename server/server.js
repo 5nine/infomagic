@@ -182,6 +182,12 @@ app.post('/api/config', requireRole(['admin', 'editor']), (req, res) => {
   }
   
   saveConfig(cfg);
+  
+  // Broadcast calendar refresh if calendar view was updated
+  if (req.body.calendar && req.body.calendar.view) {
+    broadcastCalendarRefresh();
+  }
+  
   res.json({ ok: true });
 });
 
@@ -235,6 +241,16 @@ function broadcastState(state) {
 // Broadcast function to send image list updates to all connected clients
 function broadcastImageList(data) {
   const message = JSON.stringify(data);
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  });
+}
+
+// Broadcast function to refresh calendar on all connected clients
+function broadcastCalendarRefresh() {
+  const message = JSON.stringify({ type: 'calendar-refresh' });
   wss.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(message);

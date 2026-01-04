@@ -132,6 +132,9 @@
               imageCache.clear();
               preloadImages();
               updateSlideDisplay();
+            } else if (data.type === 'calendar-refresh') {
+              // Force refresh calendar when view is changed
+              loadCalendar();
             }
           } catch (err) {
             console.error('Error parsing WebSocket message:', err);
@@ -321,7 +324,7 @@
 
         loadCalendar();
         loadWeather();
-        setInterval(loadCalendar, 60 * 1000); // Update calendar every minute
+        setInterval(loadCalendar, 3 * 60 * 1000); // Update calendar every 3 minutes
         setInterval(loadWeather, 30 * 60 * 1000);
       })();
     </script>

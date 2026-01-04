@@ -290,6 +290,14 @@
           const isToday = dateObj.toDateString() === today.toDateString();
           const dateLabel = isToday ? 'Idag' : `${dayName} ${day} ${monthName}`;
           
+          // Format precipitation info
+          let precipText = '';
+          if (d.precipType === 1) {
+            precipText = d.precipAmount > 0 ? `Regn ${d.precipAmount} mm` : 'Regn';
+          } else if (d.precipType === 3) {
+            precipText = d.precipAmount > 0 ? `Snö ${d.precipAmount} mm` : 'Snö';
+          }
+          
           weatherRows.innerHTML += `
       <div class="weather-day">
         <div class="weather-left">
@@ -298,7 +306,7 @@
           </svg>
           <div class="weather-date-info">
             <div class="weather-date">${dateLabel}</div>
-            ${d.precip ? '<div class="weather-precip">Nederbörd</div>' : ''}
+            ${precipText ? `<div class="weather-precip">${precipText}</div>` : ''}
           </div>
         </div>
         <div class="weather-mid">

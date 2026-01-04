@@ -61,7 +61,8 @@ async function getWeather() {
         temps: [],
         winds: [],
         symbols: [],
-        precip: false
+        precipTypes: [], // Collect all precipitation types (1=rain, 3=snow)
+        precipAmount: 0 // mm
       };
     }
 
@@ -74,8 +75,16 @@ async function getWeather() {
     days[date].symbols.push(params.Wsymb2);
 
     // Nederbörd: regn eller snö
-    if (params.pmean > 0 || params.pcat > 0) {
-      days[date].precip = true;
+    // pcat: 0=no, 1=rain, 2=sleet, 3=snow
+    if (params.pcat > 0) {
+      // Collect precipitation types (only rain=1 or snow=3, ignore sleet=2)
+      if (params.pcat === 1 || params.pcat === 3) {
+        days[date].precipTypes.push(params.pcat);
+      }
+      // Sum up precipitation amount in mm
+      if (params.pmean > 0) {
+        days[date].precipAmount += params.pmean;
+      }
     }
   });
 
@@ -97,12 +106,24 @@ async function getWeather() {
         )
         .pop();
 
+      // vanligaste nederbördstypen för dagen (1=rain, 3=snow)
+      const precipType = d.precipTypes.length > 0
+        ? d.precipTypes
+            .sort(
+              (a, b) =>
+                d.precipTypes.filter(x => x === a).length -
+                d.precipTypes.filter(x => x === b).length
+            )
+            .pop()
+        : null;
+
       return {
         date,
         min,
         max,
         wind,
-        precip: d.precip,
+        precipType, // 1=rain, 3=snow, null=no precip
+        precipAmount: Math.round(d.precipAmount * 10) / 10, // Round to 1 decimal
         symbol
       };
     });
